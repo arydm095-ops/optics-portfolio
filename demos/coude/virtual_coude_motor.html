@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>虚拟四镜库德平台</title>
+<style>
+  :root {
+    font-family: "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif;
+    background: #eef2f5;
+    color: #17202a;
+  }
+  body { margin: 0; padding: 16px; }
+  h1 { margin: 0 0 8px; font-size: 24px; }
+  .layout { display: grid; grid-template-columns: 1.05fr .95fr; gap: 12px; }
+  .panel {
+    background: #fff;
+    border: 1px solid #d8dee7;
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 8px 22px rgba(24, 36, 50, 0.08);
+  }
+  .wide { grid-column: 1 / -1; }
+  .subgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  h2 { margin: 0 0 8px; font-size: 17px; }
+  canvas {
+    display: block;
+    width: 100%;
+    height: 360px;
+    border: 1px solid #d8dee7;
+    border-radius: 6px;
+    background: linear-gradient(#fbfcfe, #edf3f8);
+  }
+  #spotCanvas { height: 360px; background: #101923; }
+  .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+  button, select, input, textarea {
+    font-family: inherit;
+    border: 1px solid #9faabd;
+    border-radius: 6px;
+    background: #fff;
+    padding: 6px 9px;
+  }
+  button { cursor: pointer; }
+  .primary { background: #1f6fd1; color: #fff; border-color: #1f6fd1; }
+  .green { background: #179b5b; color: #fff; border-color: #179b5b; }
+  .danger { background: #fff4f2; border-color: #e28c83; }
+  .stats { display: grid; grid-template-columns: repeat(4, minmax(120px, 1fr)); gap: 8px; margin-top: 10px; }
+  .stat { background: #f7f9fb; border: 1px solid #e3e8ef; border-radius: 6px; padding: 8px; font-size: 13px; }
+  .stat b { display: block; font-size: 16px; margin-top: 2px; word-break: break-all; }
+  table { border-collapse: collapse; width: 100%; font-size: 12px; }
+  th, td { border: 1px solid #d6dde8; padding: 4px; text-align: center; }
+  th { background: #f1f5f9; }
+  td:first-child { font-weight: 700; background: #f8fafc; text-align: left; }
+  .matrixInput { width: 66px; padding: 3px 4px; text-align: right; border-radius: 4px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 8px; }
+  .tab { padding: 6px 10px; border: 1px solid #9faabd; border-radius: 6px; background: #fff; cursor: pointer; }
+  .tab.active { background: #1f6fd1; color: #fff; border-color: #1f6fd1; }
+  .hint { margin-top: 8px; color: #5b6878; font-size: 12px; line-height: 1.45; }
+  .scroll { max-height: 270px; overflow: auto; border: 1px solid #d8dee7; border-radius: 6px; }
+  #logTable { min-width: 980px; }
+  @media (max-width: 1120px) {
+    .layout, .subgrid { grid-template-columns: 1fr; }
+    canvas, #spotCanvas { height: 320px; }
+  }
+</style>
+</head>
+<body>
+<h1>虚拟四镜库德平台</h1>
+
+<div class="layout">
+  <section class="panel">
+    <h2>① 虚拟平台</h2>
+    <canvas id="platformCanvas"></canvas>
+    <div class="controls">
+      <label>方位命令 Az <input id="azCmd" type="number" value="0" step="1" min="0" max="360">°</label>
+      <label>俯仰命令 El <input id="elCmd" type="number" value="30" step="1" min="0" max="90">°</label>
+      <button id="moveBtn" class="primary">运动到目标姿态</button>
+      <button id="sampleBtn">采集当前点</button>
+      <button id="zeroBtn">回零</button>
+    </div>
+    <div class="stats" id="motorStats"></div>
+  </section>
+
+  <section class="panel">
+    <h2>② 检测屏</h2>
+    <canvas id="spotCanvas"></canvas>
+    <div class="controls">
+      <label>显示倍率
+        <select id="spotZoom">
+          <option value="10">10x</option>
+          <option value="25">25x</option>
+          <option value="50" selected>50x</option>
+          <option value="75">75x</option>
+          <option value="100">100x</option>
+          <option value="150">150x</option>
+          <option value="200">200x</option>
+        </select>
+      </label>
+      <label><input id="spotTrack" type="checkbox"> 跟踪光斑</label>
+    </div>
+    <div class="stats" id="spotStats"></div>
+    <p class="hint">检测屏输出：脱靶量 x/y，单位 mm；同时给出等效像素坐标。屏幕中心为理想目标点。</p>
+  </section>
+
+  <section class="panel wide">
+    <div class="subgrid">
+      <div>
+        <h2>③ 误差源矩阵设置</h2>
+        <div class="tabs">
+          <button class="tab active" id="staticTab">固定误差</button>
+          <button class="tab" id="wobbleTab">晃动峰值</button>
+        </div>
+        <div class="controls">
+          <label>误差强度倍数 <input id="randomScale" type="number" value="1" min="0" step="0.1"></label>
+          <label>波动幅度 <input id="randomSpread" type="number" value="30" min="0" max="300" step="5">%</label>
+        </div>
+        <div id="matrixBox"></div>
+        <div class="controls">
+          <button id="applyMatrixBtn" class="green">应用误差矩阵</button>
+          <button id="randomStaticBtn">随机固定误差</button>
+          <button id="randomWobbleBtn">随机晃动误差</button>
+          <button id="clearErrBtn" class="danger">清零误差</button>
+        </div>
+        <p class="hint">固定误差为系统装调偏差；晃动峰值只在平台运动或尚未稳定时按运动强度参与光斑计算。随机生成采用“典型值 × 误差强度倍数”，再按波动幅度在典型值附近随机浮动。dx/dy/dz 单位 mm，rx/ry/rz 单位 arcsec。</p>
+      </div>
+      <div>
+        <h2>④ 自动测试设置</h2>
+        <div class="controls">
+          <label>测试方案
+            <select id="testPreset">
+              <option value="quick">快速检查 Q：El=30，Az 每 60°</option>
+              <option value="calib" selected>校正点集 C：El=0/30/60，Az 每 45°</option>
+              <option value="verify">验证点集 V：El=0/15/30/45/60，Az 每 30°</option>
+              <option value="custom">自定义</option>
+            </select>
+          </label>
+          <label>自定义 El 列表 <input id="customEl" value="0,30,60"></label>
+          <label>自定义 Az 步长 <input id="customAzStep" type="number" value="45" min="1" max="180">°</label>
+          <label>每步间隔 <input id="dwellMs" type="number" value="500" min="0" step="100"> ms</label>
+          <label>每点采样次数 <input id="avgFrames" type="number" value="3" min="1" max="20"></label>
+        </div>
+        <div class="controls">
+          <button id="runTestBtn" class="primary">一键自动测试</button>
+          <button id="stopTestBtn" class="danger">停止测试</button>
+          <button id="clearLogBtn">清空记录</button>
+          <button id="exportCsvBtn">导出 CSV</button>
+        </div>
+        <div class="stats" id="testStats"></div>
+        <p class="hint">自动测试会逐点下发 Az/El 命令，等待到位和设定间隔后采集光斑。每点采样次数表示同一姿态连续取 N 帧并求平均，用于削弱随机晃动；每步间隔用于模拟真实平台等待稳定、避免连续运动发热。</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel wide">
+    <h2>⑤ 平台回传记录</h2>
+    <div class="scroll">
+      <table id="logTable">
+        <thead>
+          <tr>
+            <th>#</th><th>时间</th><th>方位命令</th><th>俯仰命令</th><th>方位反馈</th><th>俯仰反馈</th>
+            <th>方位速度</th><th>俯仰速度</th><th>晃动参与</th><th>脱靶X(mm)</th><th>脱靶Y(mm)</th><th>到位</th>
+          </tr>
+        </thead>
+        <tbody id="logBody"></tbody>
+      </table>
+    </div>
+    <p class="hint">当前采用工程物理量回传模式，先统一显示角度、速度和脱靶量。真实硬件接入后，再把这些量映射到控制板采集值和通信帧。</p>
+  </section>
+</div>
+
+<script>
+const ARCSEC_TO_RAD=Math.PI/(180*3600), RAD_TO_ARCSEC=180*3600/Math.PI;
+const ELEMENTS=["Source","M1","M2","M3","M4","AzAxis","ElAxis"];
+const DOFS=["dx","dy","dz","rx","ry","rz"];
+const ROW=Object.fromEntries(ELEMENTS.map((e,i)=>[e,i]));
+const COL=Object.fromEntries(DOFS.map((d,i)=>[d,i]));
+const SYS={H1:150,L1:200,H2:150,Ldet:500,elMirrorFactor:.5};
+const DET={pitchMm:0.005,width:2048,height:2048};
+
+let staticErr=zerosErr(), wobblePeak=zerosErr(), mirrorAdjust=zerosErr(), activeMatrix="static";
+let cmdAz=0, cmdEl=30, cmdAzMotion=0, actualAz=0, actualEl=30;
+let lastSample=null, running=false, stopFlag=false, logRows=[];
+let lastTick=performance.now();
+let lastAzVel=0, lastElVel=0, motionLevel=0;
+let apiStopFlag=false, apiRunning=false;
+let embeddedMode=false, animationHandle=0, lastVisualAt=0;
+
+function isEditableTarget(target){
+  const tag=(target?.tagName||"").toLowerCase();
+  return target?.isContentEditable||["input","textarea","select"].includes(tag);
+}
+function installKeyboardSafety(){
+  const guarded=new Set([" ","Enter","ArrowUp","ArrowDown","ArrowLeft","ArrowRight","PageUp","PageDown","Home","End"]);
+  document.addEventListener("keydown",event=>{
+    if(!isEditableTarget(event.target)&&guarded.has(event.key)){
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  },true);
+}
+
+function zerosErr(){return Array.from({length:7},()=>Array(6).fill(0));}
+function cloneErr(e){return e.map(r=>r.slice());}
+function randUniform(a,b){return a+(b-a)*Math.random();}
+function randNormal(){
+  const u1=Math.max(1e-12,Math.random()),u2=Math.random();
+  return Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2);
+}
+function randomSettings(){
+  return {
+    scale: Math.max(0,Number(document.getElementById("randomScale")?.value)||1),
+    spread: Math.max(0,Number(document.getElementById("randomSpread")?.value)||0)/100
+  };
+}
+function variedTypical(base,settings,signed=true){
+  const nominal=base*settings.scale;
+  const factor=Math.max(0,1+settings.spread*randNormal());
+  const value=nominal*factor;
+  return signed?(Math.random()<0.5?-value:value):value;
+}
+function norm360(a){return ((a%360)+360)%360;}
+function shortestDeltaDeg(target,current){return ((target-current+540)%360+360)%360-180;}
+function randomStatic(){
+  const settings=randomSettings();
+  const tr=[0.0030,0.0040,0.0040,0.0040,0.0040,0.0020,0.0020], rr=[0.18,0.35,0.35,0.35,0.35,0.22,0.22], e=zerosErr();
+  for(let i=0;i<7;i++){for(let j=0;j<3;j++)e[i][j]=variedTypical(tr[i],settings,true);for(let j=3;j<6;j++)e[i][j]=variedTypical(rr[i],settings,true);}
+  return e;
+}
+function randomWobble(){
+  const settings=randomSettings();
+  const tr=[0.00020,0.00025,0.00025,0.00025,0.00025,0.00020,0.00020], rr=[0.015,0.025,0.025,0.025,0.025,0.030,0.030], e=zerosErr();
+  for(let i=0;i<7;i++){for(let j=0;j<3;j++)e[i][j]=variedTypical(tr[i],settings,false);for(let j=3;j<6;j++)e[i][j]=variedTypical(rr[i],settings,false);}
+  return e;
+}
+function instantErr(wobbleScale=1){
+  const e=cloneErr(staticErr);
+  const k=Math.max(0,Math.min(1,wobbleScale));
+  for(let i=0;i<7;i++)for(let j=0;j<6;j++)e[i][j]+=mirrorAdjust[i][j]+randUniform(-wobblePeak[i][j]*k,wobblePeak[i][j]*k);
+  return e;
+}
+function dot(a,b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];}
+function cross(a,b){return[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];}
+function norm(a){return Math.hypot(a[0],a[1],a[2]);}
+function unit(a){const n=norm(a)||1;return[a[0]/n,a[1]/n,a[2]/n];}
+function add(a,b){return[a[0]+b[0],a[1]+b[1],a[2]+b[2]];}
+function sub(a,b){return[a[0]-b[0],a[1]-b[1],a[2]-b[2]];}
+function scale(a,s){return[a[0]*s,a[1]*s,a[2]*s];}
+function matVec(M,v){return[dot(M[0],v),dot(M[1],v),dot(M[2],v)];}
+function matMul(A,B){return A.map(r=>[0,1,2].map(j=>r[0]*B[0][j]+r[1]*B[1][j]+r[2]*B[2][j]));}
+function rotX(a){const c=Math.cos(a),s=Math.sin(a);return[[1,0,0],[0,c,-s],[0,s,c]];}
+function rotY(a){const c=Math.cos(a),s=Math.sin(a);return[[c,0,s],[0,1,0],[-s,0,c]];}
+function rotZ(a){const c=Math.cos(a),s=Math.sin(a);return[[c,-s,0],[s,c,0],[0,0,1]];}
+function rotArcsec(v){return matMul(matMul(rotZ(v[2]*ARCSEC_TO_RAD),rotY(v[1]*ARCSEC_TO_RAD)),rotX(v[0]*ARCSEC_TO_RAD));}
+function surfaceWithError(p0,n0,row){return[add(p0,row.slice(0,3)),unit(matVec(rotArcsec(row.slice(3,6)),n0))];}
+function reflectAtPlane(p,v,pm,nm){const den=dot(v,nm);const t=dot(sub(pm,p),nm)/(Math.abs(den)<1e-12?1e-12:den);const pn=add(p,scale(v,t));return[pn,unit(sub(v,scale(nm,2*dot(v,nm))))];}
+function traceRay(q,e){
+  const az=q[0]*Math.PI/180,el=q[1]*Math.PI/180;
+  let p=add([0,-200,0],e[ROW.Source].slice(0,3)),v=unit(matVec(rotArcsec(e[ROW.Source].slice(3,6)),[0,1,0]));
+  let s=surfaceWithError([0,0,0],[0,-1/Math.SQRT2,1/Math.SQRT2],e[ROW.M1]);[p,v]=reflectAtPlane(p,v,s[0],s[1]);
+  const Raz=matMul(rotArcsec(e[ROW.AzAxis].slice(3,6)),rotZ(az)),Taz=e[ROW.AzAxis].slice(0,3);
+  s=surfaceWithError([0,0,SYS.H1],[0,1/Math.SQRT2,-1/Math.SQRT2],e[ROW.M2]);[p,v]=reflectAtPlane(p,v,add(matVec(Raz,s[0]),Taz),unit(matVec(Raz,s[1])));
+  s=surfaceWithError([0,SYS.L1,SYS.H1],[0,-1/Math.SQRT2,1/Math.SQRT2],e[ROW.M3]);[p,v]=reflectAtPlane(p,v,add(matVec(Raz,s[0]),Taz),unit(matVec(Raz,s[1])));
+  const Rel=matMul(rotArcsec(e[ROW.ElAxis].slice(3,6)),rotX(SYS.elMirrorFactor*el)),Tel=e[ROW.ElAxis].slice(0,3),pivot=add(matVec(Raz,[0,SYS.L1,SYS.H1+SYS.H2]),Taz);
+  s=surfaceWithError([0,0,0],[0,1/Math.SQRT2,-1/Math.SQRT2],e[ROW.M4]);
+  const p4=add(pivot,matVec(Raz,add(Tel,matVec(Rel,s[0])))),n4=unit(matVec(Raz,matVec(Rel,s[1])));
+  [p,v]=reflectAtPlane(p,v,p4,n4);
+  return{finalPoint:p,finalDirection:v};
+}
+function detectorBasis(n){n=unit(n);const ref=Math.abs(n[2])<.9?[0,0,1]:[0,1,0];const u=unit(cross(ref,n));return[u,unit(cross(n,u))];}
+function spotResidual(q,e){
+  const ideal=traceRay(q,zerosErr()),actual=traceRay(q,e),target=add(ideal.finalPoint,scale(ideal.finalDirection,SYS.Ldet)),den=dot(actual.finalDirection,ideal.finalDirection);
+  const t=dot(sub(target,actual.finalPoint),ideal.finalDirection)/(Math.abs(den)<1e-12?1e-12:den),hit=add(actual.finalPoint,scale(actual.finalDirection,t)),d=sub(hit,target),[u,w]=detectorBasis(ideal.finalDirection);
+  return[dot(d,u),dot(d,w)];
+}
+function feedback(){
+  const azAngle=norm360(actualAz);
+  const inPos=Math.abs(cmdAzMotion-actualAz)<.03 && Math.abs(cmdEl-actualEl)<.03;
+  return{azAngle,inPos};
+}
+function sampleSpot(frames=1,wobbleScale=motionLevel){
+  let sx=0,sy=0;
+  for(let i=0;i<frames;i++){const r=spotResidual([norm360(actualAz),actualEl],instantErr(wobbleScale));sx+=r[0];sy+=r[1];}
+  const x=sx/frames,y=sy/frames,px=DET.width/2+x/DET.pitchMm,py=DET.height/2-y/DET.pitchMm;
+  return{x,y,px,py,onScreen:px>=0&&px<DET.width&&py>=0&&py<DET.height};
+}
+function drawMatrix(){
+  const mat=activeMatrix==="static"?staticErr:wobblePeak;
+  let html="<table><thead><tr><th>部件</th>"+DOFS.map(d=>`<th>${d}</th>`).join("")+"</tr></thead><tbody>";
+  mat.forEach((row,i)=>{html+=`<tr><td>${ELEMENTS[i]}</td>`;row.forEach((v,j)=>{html+=`<td><input class="matrixInput" data-r="${i}" data-c="${j}" type="number" step="${j<3?0.0001:0.01}" value="${Number(v).toFixed(j<3?5:3)}"></td>`;});html+="</tr>";});
+  document.getElementById("matrixBox").innerHTML=html+"</tbody></table>";
+}
+function readMatrix(){const target=activeMatrix==="static"?staticErr:wobblePeak;document.querySelectorAll(".matrixInput").forEach(inp=>target[Number(inp.dataset.r)][Number(inp.dataset.c)]=Number(inp.value)||0);}
+function setupCanvas(id){
+  const c=document.getElementById(id),dpr=window.devicePixelRatio||1,r=c.getBoundingClientRect();
+  const w=Math.max(300,Math.floor(r.width*dpr)),h=Math.max(260,Math.floor(r.height*dpr));
+  if(c.width!==w)c.width=w;
+  if(c.height!==h)c.height=h;
+  return c;
+}
+function drawPlatform(){
+  const c=setupCanvas("platformCanvas"),ctx=c.getContext("2d");ctx.clearRect(0,0,c.width,c.height);
+  const w=c.width,h=c.height;
+  ctx.fillStyle="#17202a";ctx.font="bold 15px Microsoft YaHei";ctx.fillText("方位轴俯视",24,28);ctx.fillText("俯仰轴侧视",w*.55,28);
+  const cx=w*.26,cy=h*.55,R=Math.min(w,h)*.23;
+  ctx.strokeStyle="#cbd5e1";ctx.lineWidth=2;ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.stroke();
+  for(let a=0;a<360;a+=45){const rad=(a-90)*Math.PI/180;ctx.fillStyle="#718096";ctx.font="11px Arial";ctx.fillText(a+"°",cx+Math.cos(rad)*(R+18)-10,cy+Math.sin(rad)*(R+18)+4);}
+  const ar=(norm360(actualAz)-90)*Math.PI/180,cr=(cmdAz-90)*Math.PI/180;
+  ctx.strokeStyle="#9aa8ba";ctx.setLineDash([6,5]);ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(cr)*R,cy+Math.sin(cr)*R);ctx.stroke();ctx.setLineDash([]);
+  ctx.strokeStyle="#1f6fd1";ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(ar)*R,cy+Math.sin(ar)*R);ctx.stroke();
+  ctx.fillStyle="#1f6fd1";ctx.beginPath();ctx.arc(cx+Math.cos(ar)*R,cy+Math.sin(ar)*R,7,0,Math.PI*2);ctx.fill();
+  const sx=w*.63,sy=h*.74,L=Math.min(w,h)*.30,er=-actualEl*Math.PI/180,ec=-cmdEl*Math.PI/180;
+  ctx.strokeStyle="#cbd5e1";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(sx-L*.15,sy);ctx.lineTo(sx+L*1.05,sy);ctx.stroke();
+  ctx.strokeStyle="#9aa8ba";ctx.setLineDash([6,5]);ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx+Math.cos(ec)*L,sy+Math.sin(ec)*L);ctx.stroke();ctx.setLineDash([]);
+  ctx.strokeStyle="#e23b2f";ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx+Math.cos(er)*L,sy+Math.sin(er)*L);ctx.stroke();
+  ctx.fillStyle="#e23b2f";ctx.beginPath();ctx.arc(sx+Math.cos(er)*L,sy+Math.sin(er)*L,7,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#4b5563";ctx.font="13px Microsoft YaHei";ctx.fillText("蓝色：方位实际角；灰虚线：命令角",24,h-34);ctx.fillText("红色：俯仰实际角；灰虚线：命令角",w*.55,h-34);
+}
+function drawSpot(){
+  const c=setupCanvas("spotCanvas"),ctx=c.getContext("2d");ctx.clearRect(0,0,c.width,c.height);
+  const s=lastSample||sampleSpot(1,0),zoom=Number(document.getElementById("spotZoom")?.value)||1,track=!!document.getElementById("spotTrack")?.checked;
+  const baseScale=Math.min(c.width,c.height)*.42/(DET.width/2),scale=baseScale*zoom,cx=c.width/2,cy=c.height/2;
+  const viewPx=track?s.px:DET.width/2,viewPy=track?s.py:DET.height/2;
+  const sxp=px=>cx+(px-viewPx)*scale,syp=py=>cy+(py-viewPy)*scale;
+  ctx.strokeStyle="#223246";ctx.lineWidth=1;
+  for(let px=0;px<=DET.width;px+=DET.width/8){const x=sxp(px);ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,c.height);ctx.stroke();}
+  for(let py=0;py<=DET.height;py+=DET.height/8){const y=syp(py);ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(c.width,y);ctx.stroke();}
+  const tx=sxp(DET.width/2),ty=syp(DET.height/2);
+  ctx.strokeStyle="#6ee7b7";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(tx-14,ty);ctx.lineTo(tx+14,ty);ctx.moveTo(tx,ty-14);ctx.lineTo(tx,ty+14);ctx.stroke();
+  const x=sxp(s.px),y=syp(s.py);
+  ctx.fillStyle=s.onScreen?"#ff3b30":"#f59e0b";ctx.strokeStyle="#ffffff";ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,8,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.strokeStyle="#ffb4ad";ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(x,y,16,0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle="#d1e7ff";ctx.font="13px Microsoft YaHei";ctx.fillText("检测屏：中心为理想目标点",18,24);
+  ctx.fillText(`显示倍率 ${zoom}x${track?"，已跟踪光斑":""}`,18,44);
+}
+function updateStats(){
+  const fb=feedback();lastSample=sampleSpot(1,motionLevel);
+  document.getElementById("motorStats").innerHTML=`<div class="stat">方位命令<b>${cmdAz.toFixed(2)}°</b></div><div class="stat">俯仰命令<b>${cmdEl.toFixed(2)}°</b></div><div class="stat">方位反馈<b>${fb.azAngle.toFixed(3)}°</b></div><div class="stat">俯仰反馈<b>${actualEl.toFixed(3)}°</b></div><div class="stat">方位速度<b>${lastAzVel.toFixed(2)} °/s</b></div><div class="stat">俯仰速度<b>${lastElVel.toFixed(2)} °/s</b></div><div class="stat">到位状态<b>${fb.inPos?"到位":"运动中"}</b></div><div class="stat">晃动参与<b>${(motionLevel*100).toFixed(0)}%</b></div>`;
+  document.getElementById("spotStats").innerHTML=`<div class="stat">脱靶 X<b>${lastSample.x.toFixed(5)} mm</b></div><div class="stat">脱靶 Y<b>${lastSample.y.toFixed(5)} mm</b></div><div class="stat">屏内状态<b>${lastSample.onScreen?"在屏内":"已出屏"}</b></div><div class="stat">晃动参与<b>${(motionLevel*100).toFixed(0)}%</b></div>`;
+  document.getElementById("testStats").innerHTML=`<div class="stat">记录点数<b>${logRows.length}</b></div><div class="stat">当前方案<b>${document.getElementById("testPreset").selectedOptions[0].text.split("：")[0]}</b></div><div class="stat">运行状态<b>${running?"自动测试中":"空闲"}</b></div><div class="stat">每点采样次数<b>${document.getElementById("avgFrames").value}</b></div>`;
+}
+function setCommand(az,el){cmdAz=norm360(Number(az)||0);cmdEl=Math.max(0,Math.min(90,Number(el)||0));cmdAzMotion=actualAz+shortestDeltaDeg(cmdAz,actualAz);document.getElementById("azCmd").value=cmdAz.toFixed(2);document.getElementById("elCmd").value=cmdEl.toFixed(2);}
+function isInPos(){return feedback().inPos;}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+function stepMotion(now=performance.now()){
+  const dt=Math.min(.08,Math.max(0,(now-lastTick)/1000));lastTick=now;
+  const prevAz=actualAz,prevEl=actualEl;
+  actualAz+=(cmdAzMotion-actualAz)*Math.min(1,dt*3.2);
+  actualEl+=(cmdEl-actualEl)*Math.min(1,dt*3.2);
+  if(Math.abs(cmdAzMotion-actualAz)<0.001)actualAz=cmdAzMotion;
+  if(Math.abs(cmdEl-actualEl)<0.001)actualEl=cmdEl;
+  lastAzVel=dt>0?(actualAz-prevAz)/dt:0;lastElVel=dt>0?(actualEl-prevEl)/dt:0;
+  const movingLevel=Math.min(1,(Math.abs(lastAzVel)+Math.abs(lastElVel))/90);
+  motionLevel=Math.max(movingLevel,motionLevel*Math.exp(-dt*5));
+  if(feedback().inPos&&movingLevel<0.005)motionLevel*=Math.exp(-dt*12);
+}
+async function waitInPosition(){for(let i=0;i<300;i++){stepMotion();if(isInPos())return true;await sleep(20);}return false;}
+function testPoints(){
+  const p=document.getElementById("testPreset").value;
+  if(p==="quick") return {azs:[0,60,120,180,240,300],els:[30]};
+  if(p==="calib") return {azs:[0,45,90,135,180,225,270,315],els:[0,30,60]};
+  if(p==="verify") return {azs:Array.from({length:12},(_,i)=>i*30),els:[0,15,30,45,60]};
+  const step=Math.max(1,Number(document.getElementById("customAzStep").value)||45);
+  const azs=[];for(let a=0;a<360;a+=step)azs.push(a);
+  const els=document.getElementById("customEl").value.split(",").map(x=>Number(x.trim())).filter(x=>Number.isFinite(x));
+  return {azs,els:els.length?els:[30]};
+}
+function makeSampleRecord(sample){
+  stepMotion();
+  const fb=feedback();
+  return {cmdAz,cmdEl,actualAz:fb.azAngle,actualEl,azVel:lastAzVel,elVel:lastElVel,wobble:motionLevel,spotX:sample.x,spotY:sample.y,pixelX:sample.px,pixelY:sample.py,onScreen:sample.onScreen,inPos:fb.inPos};
+}
+async function moveAndSampleForApi(point,dwellMs=0,frames=1,log=false){
+  setCommand(Number(point.az)||0,Number(point.el)||0);
+  await waitInPosition();
+  await sleep(Math.max(0,Number(dwellMs)||0));
+  stepMotion();
+  const sample=sampleSpot(Math.max(1,Number(frames)||1),motionLevel);
+  if(log)addLog(sample);
+  return makeSampleRecord(sample);
+}
+async function runScanForApi(points,dwellMs=0,frames=1,log=false){
+  if(apiRunning)throw new Error("虚拟平台正在扫描，请先停止或等待完成");
+  apiRunning=true;
+  apiStopFlag=false;
+  try{
+    const out=[];
+    for(const point of points){
+      if(apiStopFlag)break;
+      const rec=await moveAndSampleForApi(point,dwellMs,frames,log);
+      out.push(rec);
+      window.parent?.postMessage({channel:"coude-motor",type:"scanProgress",sample:rec},"*");
+      if(apiStopFlag)break;
+    }
+    return out;
+  }finally{
+    apiRunning=false;
+  }
+}
+function applyMirrorMovesForApi(moves,minAbsArcsec=0,executionErrorPct=0){
+  readMatrix();
+  const pct=Math.max(0,Number(executionErrorPct)||0)/100;
+  const minAbs=Math.max(0,Number(minAbsArcsec)||0);
+  const allowedElements=new Set(["M1","M2","M3","M4"]);
+  const allowedDofs=new Set(["rx","ry"]);
+  const applied=[];
+  for(const m of moves||[]){
+    if(!allowedElements.has(m.element)||!allowedDofs.has(m.dof))continue;
+    const standard=Number(m.value)||0;
+    if(Math.abs(standard)<minAbs){applied.push({...m,standard,applied:0,cumulative:mirrorAdjust[ROW[m.element]][COL[m.dof]],skipped:true});continue;}
+    const appliedValue=standard*(1+randUniform(-pct,pct));
+    mirrorAdjust[ROW[m.element]][COL[m.dof]]+=appliedValue;
+    applied.push({...m,standard,applied:appliedValue,cumulative:mirrorAdjust[ROW[m.element]][COL[m.dof]],skipped:false});
+  }
+  return applied;
+}
+window.addEventListener("message",async event=>{
+  const msg=event.data||{};
+  if(embeddedMode&&event.source!==window.parent)return;
+  if(msg.channel!=="coude-debug"||!msg.id)return;
+  try{
+    let result=null;
+    if(msg.type==="getState"){
+      result=makeSampleRecord(sampleSpot(1,motionLevel));
+    }else if(msg.type==="setCommand"){
+      setCommand(msg.az,msg.el);
+      result={ok:true};
+    }else if(msg.type==="stopScan"){
+      apiStopFlag=true;stopFlag=true;
+      result={ok:true};
+    }else if(msg.type==="moveAndSample"){
+      result=await moveAndSampleForApi(msg.point||{},msg.dwellMs,msg.frames,msg.log);
+    }else if(msg.type==="runScan"){
+      result=await runScanForApi(msg.points||[],msg.dwellMs,msg.frames,msg.log);
+    }else if(msg.type==="applyMirrorMoves"){
+      result=applyMirrorMovesForApi(msg.moves||[],msg.minAbsArcsec,msg.executionErrorPct);
+    }else{
+      throw new Error("未知指令: "+msg.type);
+    }
+    event.source?.postMessage({channel:"coude-motor",id:msg.id,ok:true,result},"*");
+  }catch(err){
+    event.source?.postMessage({channel:"coude-motor",id:msg.id,ok:false,error:String(err&&err.message||err)},"*");
+  }
+});
+window.addEventListener("pagehide",()=>{
+  apiStopFlag=true;
+  stopFlag=true;
+  if(animationHandle)cancelAnimationFrame(animationHandle);
+});
+function addLog(avgSpot){
+  if(embeddedMode)return;
+  const fb=feedback(), row={idx:logRows.length+1,time:new Date().toLocaleTimeString(),cmdAz,cmdEl,actualAz:fb.azAngle,actualEl,azVel:lastAzVel,elVel:lastElVel,wobble:motionLevel,x:avgSpot.x,y:avgSpot.y,inPos:fb.inPos};
+  logRows.push(row);renderLog();
+}
+function renderLog(){
+  document.getElementById("logBody").innerHTML=logRows.map(r=>`<tr><td>${r.idx}</td><td>${r.time}</td><td>${r.cmdAz.toFixed(2)}°</td><td>${r.cmdEl.toFixed(2)}°</td><td>${r.actualAz.toFixed(3)}°</td><td>${r.actualEl.toFixed(3)}°</td><td>${r.azVel.toFixed(2)} °/s</td><td>${r.elVel.toFixed(2)} °/s</td><td>${(r.wobble*100).toFixed(0)}%</td><td>${r.x.toFixed(5)}</td><td>${r.y.toFixed(5)}</td><td>${r.inPos?"是":"否"}</td></tr>`).join("");
+}
+async function runAutoTest(){
+  if(running)return;running=true;stopFlag=false;
+  const {azs,els}=testPoints(), dwell=Number(document.getElementById("dwellMs").value)||0, frames=Math.max(1,Number(document.getElementById("avgFrames").value)||1);
+  for(const el of els){for(const az of azs){if(stopFlag){running=false;return;}setCommand(az,el);await waitInPosition();await sleep(dwell);addLog(sampleSpot(frames));}}
+  running=false;
+}
+function exportCsv(){
+  const header=["idx","time","cmdAzDeg","cmdElDeg","actualAzDeg","actualElDeg","azVelDegS","elVelDegS","wobblePercent","spotXmm","spotYmm","inPos"];
+  const rows=logRows.map(r=>[r.idx,r.time,r.cmdAz,r.cmdEl,r.actualAz,r.actualEl,r.azVel,r.elVel,r.wobble*100,r.x,r.y,r.inPos?1:0]);
+  const csv=[header,...rows].map(r=>r.join(",")).join("\n");
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="virtual_coude_test_log.csv";a.click();
+}
+function setupEmbeddedMode(){
+  embeddedMode=new URLSearchParams(location.search).get("embed")==="1";
+  if(!embeddedMode)return;
+  const wideSections=document.querySelectorAll("section.panel.wide");
+  const matrixAndAuto=wideSections[0], logSection=wideSections[1];
+  const autoPanel=matrixAndAuto?.querySelector(".subgrid > div:nth-child(2)");
+  const subgrid=matrixAndAuto?.querySelector(".subgrid");
+  if(autoPanel)autoPanel.style.display="none";
+  if(subgrid)subgrid.style.gridTemplateColumns="1fr";
+  if(logSection)logSection.style.display="none";
+}
+function init(){
+  installKeyboardSafety();
+  setupEmbeddedMode();
+  drawMatrix();
+  document.getElementById("staticTab").onclick=()=>{readMatrix();activeMatrix="static";document.getElementById("staticTab").classList.add("active");document.getElementById("wobbleTab").classList.remove("active");drawMatrix();};
+  document.getElementById("wobbleTab").onclick=()=>{readMatrix();activeMatrix="wobble";document.getElementById("wobbleTab").classList.add("active");document.getElementById("staticTab").classList.remove("active");drawMatrix();};
+  document.getElementById("applyMatrixBtn").onclick=()=>{readMatrix();};
+  document.getElementById("randomStaticBtn").onclick=()=>{readMatrix();staticErr=randomStatic();mirrorAdjust=zerosErr();if(activeMatrix==="static")drawMatrix();};
+  document.getElementById("randomWobbleBtn").onclick=()=>{readMatrix();wobblePeak=randomWobble();if(activeMatrix==="wobble")drawMatrix();};
+  document.getElementById("clearErrBtn").onclick=()=>{staticErr=zerosErr();wobblePeak=zerosErr();mirrorAdjust=zerosErr();drawMatrix();};
+  document.getElementById("moveBtn").onclick=()=>setCommand(Number(document.getElementById("azCmd").value)||0,Number(document.getElementById("elCmd").value)||0);
+  document.getElementById("zeroBtn").onclick=()=>setCommand(0,0);
+  document.getElementById("sampleBtn").onclick=()=>addLog(sampleSpot(Math.max(1,Number(document.getElementById("avgFrames").value)||1),motionLevel));
+  document.getElementById("runTestBtn").onclick=runAutoTest;
+  document.getElementById("stopTestBtn").onclick=()=>{stopFlag=true;running=false;};
+  document.getElementById("clearLogBtn").onclick=()=>{logRows=[];renderLog();};
+  document.getElementById("exportCsvBtn").onclick=exportCsv;
+}
+function animate(now){
+  stepMotion(now);
+  const interval=embeddedMode?120:70;
+  if(!document.hidden&&(!lastVisualAt||now-lastVisualAt>=interval)){
+    updateStats();drawPlatform();drawSpot();
+    lastVisualAt=now;
+  }
+  animationHandle=requestAnimationFrame(animate);
+}
+init();setCommand(0,30);animationHandle=requestAnimationFrame(animate);
+</script>
+</body>
+</html>

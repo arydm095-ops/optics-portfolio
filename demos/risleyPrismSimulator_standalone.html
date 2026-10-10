@@ -1,0 +1,1764 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>三楔镜折射扫描仿真</title>
+  <style>
+    :root {
+      --bg: #f5f6f8;
+      --panel: #ffffff;
+      --ink: #18212f;
+      --muted: #667085;
+      --line: #d8dde6;
+      --blue: #2563eb;
+      --green: #12805c;
+      --orange: #c2410c;
+      --shadow: 0 10px 32px rgba(15, 23, 42, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+      font-size: 14px;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 390px minmax(680px, 1fr);
+      gap: 12px;
+      padding: 12px;
+    }
+
+    aside, main {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+
+    aside {
+      overflow: auto;
+      padding: 14px;
+    }
+
+    main {
+      padding: 12px;
+      display: grid;
+      grid-template-rows: 1.05fr 1fr;
+      gap: 10px;
+      min-height: calc(100vh - 24px);
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    fieldset {
+      border: 1px solid var(--line);
+      margin: 0 0 10px;
+      padding: 10px;
+    }
+
+    legend {
+      padding: 0 6px;
+      font-weight: 700;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      align-items: center;
+      gap: 8px;
+      margin: 7px 0;
+    }
+
+    .two {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .three {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .refractive-grid {
+      display: grid;
+      grid-template-rows: auto auto;
+      gap: 4px;
+    }
+
+    .mini-labels {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .mini-labels span {
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    label { color: #2f3a4c; }
+
+    input, select {
+      width: 100%;
+      min-width: 0;
+      border: 1px solid #c8d0dc;
+      border-radius: 6px;
+      padding: 7px 8px;
+      font: inherit;
+      color: var(--ink);
+      background: #fff;
+    }
+
+    input:disabled {
+      background: #eef1f5;
+      color: #7a8494;
+    }
+
+    input[type="checkbox"] {
+      width: auto;
+      min-width: auto;
+      margin: 0 8px 0 0;
+    }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      min-height: 28px;
+      margin: 5px 0 8px;
+      color: #2f3a4c;
+    }
+
+    .check-row label {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 6px;
+      padding: 9px 10px;
+      font: inherit;
+      font-weight: 700;
+      color: #fff;
+      background: var(--blue);
+      cursor: pointer;
+    }
+
+    button.secondary { background: var(--green); }
+    button.tertiary { background: var(--orange); }
+    button.neutral { background: #475467; }
+    button:active { transform: translateY(1px); }
+
+    .status {
+      margin-top: 12px;
+      min-height: 58px;
+      color: var(--muted);
+      line-height: 1.45;
+      white-space: pre-line;
+    }
+
+    .plot-grid, .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      min-height: 0;
+    }
+
+    .bottom-grid {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .plot, .wide-plot, .detail-plot {
+      min-height: 0;
+      border: 1px solid var(--line);
+      background: #fff;
+      position: relative;
+    }
+
+    .wide-plot { grid-column: 1 / -1; }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    @media (max-width: 1050px) {
+      .app { grid-template-columns: 1fr; }
+      main { min-height: 1320px; }
+      .plot-grid, .bottom-grid { grid-template-columns: 1fr; }
+      .wide-plot { grid-column: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <h1>三楔镜折射扫描仿真</h1>
+
+      <fieldset>
+        <legend>光线/荧幕</legend>
+        <div class="row"><label for="inputX">入射点 x</label><input id="inputX" type="number" step="any" value="0"></div>
+        <div class="row"><label for="inputY">入射点 y</label><input id="inputY" type="number" step="any" value="0"></div>
+        <div class="row"><label for="inputAngleX">入射角 x deg</label><input id="inputAngleX" type="number" step="any" value="0"></div>
+        <div class="row"><label for="inputAngleY">入射角 y deg</label><input id="inputAngleY" type="number" step="any" value="0"></div>
+        <div class="row"><label for="screenDistance">末端到荧幕 P mm</label><input id="screenDistance" type="number" step="any" value="1000"></div>
+        <div class="row">
+          <label for="screenMode">荧幕平面</label>
+          <select id="screenMode">
+            <option value="xy" selected>xy 平行屏</option>
+            <option value="normal">初始出射光垂直屏</option>
+          </select>
+        </div>
+        <div class="row"><label for="beamCount">线束数量</label><input id="beamCount" type="number" step="1" min="1" value="1"></div>
+        <div class="row"><label for="beamAngleGap">相邻角度差 mrad</label><input id="beamAngleGap" type="number" step="any" value="0"></div>
+        <div class="row"><label for="beamPositionGap">相邻位置差 mm</label><input id="beamPositionGap" type="number" step="any" value="0"></div>
+        <div class="row">
+          <label for="beamAxis">多线方向</label>
+          <select id="beamAxis"><option value="y" selected>y 方向</option><option value="x">x 方向</option></select>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>折射率/关系参数</legend>
+        <div class="row">
+          <label>折射率</label>
+          <div class="refractive-grid">
+            <div class="mini-labels"><span>n1</span><span>n2</span><span>n3</span></div>
+            <div class="three">
+              <input id="refractiveIndex1" type="number" step="any" value="1.517">
+              <input id="refractiveIndex2" type="number" step="any" value="1.517">
+              <input id="refractiveIndex3" type="number" step="any" value="1.517">
+            </div>
+          </div>
+        </div>
+        <div class="check-row"><label><input id="useAlphaRatio" type="checkbox">用 k1/k2 由 alpha1 联动楔角</label></div>
+        <div class="row"><label for="alpha1">楔角 alpha1 deg</label><input id="alpha1" type="number" step="any" value="5"></div>
+        <div class="row"><label for="alpha2">楔角 alpha2 deg</label><input id="alpha2" type="number" step="any" value="5"></div>
+        <div class="row"><label for="alpha3">楔角 alpha3 deg</label><input id="alpha3" type="number" step="any" value="5"></div>
+        <div class="row"><label for="k1">k1 = alpha2/alpha1</label><input id="k1" type="number" step="any" value="1"></div>
+        <div class="row"><label for="k2">k2 = alpha3/alpha1</label><input id="k2" type="number" step="any" value="1"></div>
+        <div class="check-row"><label><input id="useSpeedRatio" type="checkbox">用 M1/M2 由第一速度联动</label></div>
+        <div class="row">
+          <label for="speedUnit">速度单位</label>
+          <select id="speedUnit"><option value="degps" selected>角速度 deg/s</option><option value="rpm">转速 rpm</option></select>
+        </div>
+        <div class="row"><label id="speed1Label" for="rpm1">楔镜1角速度 deg/s</label><input id="rpm1" type="number" step="any" value="360"></div>
+        <div class="row"><label id="speed2Label" for="rpm2">楔镜2角速度 deg/s</label><input id="rpm2" type="number" step="any" value="-360"></div>
+        <div class="row"><label id="speed3Label" for="rpm3">楔镜3角速度 deg/s</label><input id="rpm3" type="number" step="any" value="120"></div>
+        <div class="row"><label for="M1">M1 = omega2/omega1</label><input id="M1" type="number" step="any" value="-1"></div>
+        <div class="row"><label for="M2">M2 = omega3/omega1</label><input id="M2" type="number" step="any" value="1"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>楔镜组</legend>
+        <div class="check-row"><label><input id="enableThirdPrism" type="checkbox" checked>启用第三楔镜</label></div>
+        <div class="row"><label for="phase1">相位1 deg</label><input id="phase1" type="number" step="any" value="0"></div>
+        <div class="row"><label for="phase2">相位2 deg</label><input id="phase2" type="number" step="any" value="0"></div>
+        <div class="row"><label for="phase3">相位3 deg</label><input id="phase3" type="number" step="any" value="0"></div>
+        <div class="row">
+          <label>构型 1/2/3</label>
+          <div class="two">
+            <select id="config1"><option value="12" selected>12</option><option value="21">21</option></select>
+            <select id="config2"><option value="12" selected>12</option><option value="21">21</option></select>
+          </div>
+        </div>
+        <div class="row">
+          <label for="config3">第三楔镜构型</label>
+          <select id="config3"><option value="12" selected>12</option><option value="21">21</option></select>
+        </div>
+        <div class="check-row"><label><input id="limitAperture" type="checkbox" checked>限制有效口径</label></div>
+        <div class="row"><label for="diameter">有效口径D(直径) mm</label><input id="diameter" type="number" step="any" value="80"></div>
+        <div class="row"><label for="thickness">中心厚度 mm</label><input id="thickness" type="number" step="any" value="20"></div>
+        <div class="row"><label for="airGap1">间距 d_air1 mm</label><input id="airGap1" type="number" step="any" value="25"></div>
+        <div class="row"><label for="airGap2">间距 d_air2 mm</label><input id="airGap2" type="number" step="any" value="25"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>平行不同轴</legend>
+        <div class="row"><label>轴心1 x/y</label><div class="two"><input id="axis1X" type="number" step="any" value="0"><input id="axis1Y" type="number" step="any" value="0"></div></div>
+        <div class="row"><label>轴心2 x/y</label><div class="two"><input id="axis2X" type="number" step="any" value="0"><input id="axis2Y" type="number" step="any" value="0"></div></div>
+        <div class="row"><label>轴心3 x/y</label><div class="two"><input id="axis3X" type="number" step="any" value="0"><input id="axis3Y" type="number" step="any" value="0"></div></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>仿真</legend>
+        <div class="row"><label for="duration">积分时间 s</label><input id="duration" type="number" step="any" value="2"></div>
+        <div class="row"><label for="samples">采样点数</label><input id="samples" type="number" step="1" value="6000"></div>
+        <div class="row"><label for="animationSpeed">动画速度 x</label><input id="animationSpeed" type="number" step="0.1" min="0.1" max="5" value="1"></div>
+      </fieldset>
+
+      <div class="button-row">
+        <button id="runBtn">运行仿真</button>
+        <button id="animateBtn" class="secondary">动画预览</button>
+        <button id="exportBtn" class="tertiary">导出 CSV</button>
+      </div>
+      <div id="status" class="status">准备就绪。第一版采用逐面 Snell 折射数值追迹。</div>
+    </aside>
+
+    <main>
+      <div class="plot-grid">
+        <div class="wide-plot"><canvas id="screenCanvas"></canvas></div>
+      </div>
+      <div class="bottom-grid">
+        <div class="plot"><canvas id="geometryCanvas"></canvas></div>
+        <div class="plot"><canvas id="prism3DCanvas"></canvas></div>
+        <div class="detail-plot"><canvas id="detailCanvas"></canvas></div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    "use strict";
+
+    const ids = [
+      "inputX", "inputY", "inputAngleX", "inputAngleY", "screenDistance", "screenMode",
+      "beamCount", "beamAngleGap", "beamPositionGap", "beamAxis",
+      "refractiveIndex1", "refractiveIndex2", "refractiveIndex3",
+      "useAlphaRatio", "alpha1", "alpha2", "alpha3", "k1", "k2",
+      "useSpeedRatio", "speedUnit", "speed1Label", "speed2Label", "speed3Label", "rpm1", "rpm2", "rpm3", "M1", "M2",
+      "enableThirdPrism", "phase1", "phase2", "phase3", "config1", "config2", "config3",
+      "limitAperture", "diameter", "thickness", "airGap1", "airGap2",
+      "axis1X", "axis1Y", "axis2X", "axis2Y", "axis3X", "axis3Y",
+      "duration", "samples", "animationSpeed", "status",
+      "screenCanvas", "geometryCanvas", "prism3DCanvas", "detailCanvas",
+      "runBtn", "animateBtn", "exportBtn"
+    ];
+    const els = Object.fromEntries(ids.map(id => [id, document.getElementById(id)]));
+
+    const EPS = 1e-12;
+    let currentResult = null;
+    let animationToken = 0;
+    let lastSpeedUnit = null;
+
+    function num(id) {
+      const value = Number(els[id].value);
+      return Number.isFinite(value) ? value : 0;
+    }
+
+    function deg2rad(d) { return d * Math.PI / 180; }
+    function rad2deg(r) { return r * 180 / Math.PI; }
+    function vAdd(a, b) { return [a[0]+b[0], a[1]+b[1], a[2]+b[2]]; }
+    function vSub(a, b) { return [a[0]-b[0], a[1]-b[1], a[2]-b[2]]; }
+    function vScale(a, s) { return [a[0]*s, a[1]*s, a[2]*s]; }
+    function dot(a, b) { return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; }
+    function cross(a, b) {
+      return [
+        a[1] * b[2] - a[2] * b[1],
+        a[2] * b[0] - a[0] * b[2],
+        a[0] * b[1] - a[1] * b[0]
+      ];
+    }
+    function norm(a) { return Math.hypot(a[0], a[1], a[2]); }
+    function normalize(a) {
+      const n = norm(a);
+      return n < EPS ? [NaN, NaN, NaN] : [a[0]/n, a[1]/n, a[2]/n];
+    }
+    function finiteVec(a) { return Array.isArray(a) && a.every(Number.isFinite); }
+
+    function readParams() {
+      const alpha1 = num("alpha1");
+      const speed1 = num("rpm1");
+      const useAlphaRatio = els.useAlphaRatio.checked;
+      const useSpeedRatio = els.useSpeedRatio.checked;
+      const speedInputs = useSpeedRatio
+        ? [speed1, speed1 * num("M1"), speed1 * num("M2")]
+        : [speed1, num("rpm2"), num("rpm3")];
+      const angularSpeeds = speedInputs.map(value => els.speedUnit.value === "rpm" ? value * 360 / 60 : value);
+      return {
+        inputOrigin: [num("inputX"), num("inputY"), 0],
+        inputAngleX: num("inputAngleX"),
+        inputAngleY: num("inputAngleY"),
+        screenDistance: Math.max(EPS, num("screenDistance")),
+        screenMode: els.screenMode.value,
+        beamCount: Math.max(1, Math.round(num("beamCount"))),
+        beamAngleGapMrad: num("beamAngleGap"),
+        beamPositionGap: num("beamPositionGap"),
+        beamAxis: els.beamAxis.value,
+        refractiveIndices: [
+          Math.max(1, num("refractiveIndex1")),
+          Math.max(1, num("refractiveIndex2")),
+          Math.max(1, num("refractiveIndex3"))
+        ],
+        enableThirdPrism: els.enableThirdPrism.checked,
+        prismCount: els.enableThirdPrism.checked ? 3 : 2,
+        useAlphaRatio,
+        useSpeedRatio,
+        alphas: useAlphaRatio
+          ? [alpha1, alpha1 * num("k1"), alpha1 * num("k2")]
+          : [alpha1, num("alpha2"), num("alpha3")],
+        speedUnit: els.speedUnit.value,
+        speedInputs,
+        angularSpeeds,
+        phases: [num("phase1"), num("phase2"), num("phase3")],
+        configs: [els.config1.value, els.config2.value, els.config3.value],
+        limitAperture: els.limitAperture.checked,
+        diameter: Math.max(EPS, num("diameter")),
+        thickness: Math.max(EPS, num("thickness")),
+        airGaps: [Math.max(0, num("airGap1")), Math.max(0, num("airGap2"))],
+        axes: [
+          [num("axis1X"), num("axis1Y")],
+          [num("axis2X"), num("axis2Y")],
+          [num("axis3X"), num("axis3Y")]
+        ],
+        duration: Math.max(EPS, num("duration")),
+        samples: Math.max(2, Math.round(num("samples")))
+      };
+    }
+
+    function beamOffset(p, beamIndex) {
+      return Number.isFinite(beamIndex) ? beamIndex - (p.beamCount - 1) / 2 : 0;
+    }
+
+    function beamInputOrigin(p, beamIndex) {
+      const offset = beamOffset(p, beamIndex) * p.beamPositionGap;
+      const origin = p.inputOrigin.slice();
+      if (p.beamAxis === "x") origin[0] += offset;
+      else origin[1] += offset;
+      return origin;
+    }
+
+    function inputDirection(p, beamIndex = null) {
+      const offsetAngleDeg = rad2deg(beamOffset(p, beamIndex) * p.beamAngleGapMrad / 1000);
+      const angleX = p.inputAngleX + (p.beamAxis === "x" ? offsetAngleDeg : 0);
+      const angleY = p.inputAngleY + (p.beamAxis === "y" ? offsetAngleDeg : 0);
+      return normalize([
+        Math.tan(deg2rad(angleX)),
+        Math.tan(deg2rad(angleY)),
+        1
+      ]);
+    }
+
+    function refract(incident, surfaceNormal, n1, n2) {
+      const I = normalize(incident);
+      if (Math.abs(n1 - n2) < 1e-12) return I;
+      let N = normalize(surfaceNormal);
+      if (!finiteVec(I) || !finiteVec(N)) return null;
+      if (dot(I, N) > 0) N = vScale(N, -1);
+      const eta = n1 / n2;
+      const cosi = -dot(N, I);
+      const k = 1 - eta * eta * (1 - cosi * cosi);
+      if (k < -1e-10) return null;
+      return normalize(vAdd(vScale(I, eta), vScale(N, eta * cosi - Math.sqrt(Math.max(0, k)))));
+    }
+
+    function intersectPlane(origin, direction, point, normal) {
+      const den = dot(direction, normal);
+      if (Math.abs(den) < EPS) return null;
+      const t = dot(vSub(point, origin), normal) / den;
+      if (t < 0) return null;
+      return vAdd(origin, vScale(direction, t));
+    }
+
+    function wedgeNormal(alphaDeg, thetaDeg) {
+      const a = deg2rad(alphaDeg);
+      const th = deg2rad(thetaDeg);
+      return normalize([
+        Math.sin(a) * Math.cos(th),
+        Math.sin(a) * Math.sin(th),
+        -Math.cos(a)
+      ]);
+    }
+
+    function apertureOk(point, axis, diameter) {
+      return Math.hypot(point[0] - axis[0], point[1] - axis[1]) <= diameter / 2 + 1e-9;
+    }
+
+    function zOnSurface(surface, x, y) {
+      const n = surface.normal;
+      if (Math.abs(n[2]) < EPS) return surface.point[2];
+      return surface.point[2] - (n[0] * (x - surface.point[0]) + n[1] * (y - surface.point[1])) / n[2];
+    }
+
+    function surfaceSequence(p, q, thetaDeg, zFront) {
+      const axis = p.axes[q];
+      const nq = p.refractiveIndices[q];
+      const flat = {
+        point: [axis[0], axis[1], zFront],
+        normal: [0, 0, -1],
+        label: "平面"
+      };
+      const wedge = {
+        point: [axis[0], axis[1], zFront + p.thickness],
+        normal: wedgeNormal(p.alphas[q], thetaDeg),
+        label: "楔面"
+      };
+      if (p.configs[q] === "21") {
+        return [
+          {...wedge, point: [axis[0], axis[1], zFront], mediumIn: 1, mediumOut: nq},
+          {...flat, point: [axis[0], axis[1], zFront + p.thickness], mediumIn: nq, mediumOut: 1}
+        ];
+      }
+      return [
+        {...flat, mediumIn: 1, mediumOut: nq},
+        {...wedge, mediumIn: nq, mediumOut: 1}
+      ];
+    }
+
+    function tracePrisms(p, time, beamIndex = null) {
+      let origin = beamInputOrigin(p, beamIndex);
+      let direction = inputDirection(p, beamIndex);
+      const hits = [];
+      const angles = p.angularSpeeds.map((omega, i) => omega * time + p.phases[i]);
+      const zFronts = [
+        20,
+        20 + p.thickness + p.airGaps[0],
+        20 + 2 * p.thickness + p.airGaps[0] + p.airGaps[1]
+      ];
+
+      for (let q = 0; q < p.prismCount; q++) {
+        const surfaces = surfaceSequence(p, q, angles[q], zFronts[q]);
+        for (let s = 0; s < 2; s++) {
+          const surface = surfaces[s];
+          const hit = intersectPlane(origin, direction, surface.point, surface.normal);
+          if (!hit) {
+            return {valid: false, reason: `第${q+1}片${surface.label}未相交`, hits, angles, beamIndex};
+          }
+          if (p.limitAperture && !apertureOk(hit, p.axes[q], p.diameter)) {
+            return {valid: false, reason: `第${q+1}片${surface.label}超出口径`, hits, angles, beamIndex};
+          }
+          const beforeDirection = direction;
+          const nextDirection = refract(direction, surface.normal, surface.mediumIn, surface.mediumOut);
+          if (!nextDirection) {
+            return {valid: false, reason: `第${q+1}片${surface.label}全反射`, hits, angles, beamIndex};
+          }
+          hits.push({
+            prism: q + 1,
+            surface: surface.label,
+            point: hit,
+            normal: surface.normal,
+            mediumIn: surface.mediumIn,
+            mediumOut: surface.mediumOut,
+            incidentDir: beforeDirection,
+            refractedDir: nextDirection
+          });
+          origin = hit;
+          direction = nextDirection;
+        }
+      }
+
+      const angleX = rad2deg(Math.atan2(direction[0], direction[2]));
+      const angleY = rad2deg(Math.atan2(direction[1], direction[2]));
+      return {
+        valid: true,
+        reason: "有效",
+        hits,
+        angles,
+        beamIndex,
+        outputOrigin: origin,
+        outputDir: direction,
+        angleXY: [angleX, angleY]
+      };
+    }
+
+    function outputScreenZ(p) {
+      const zFronts = [
+        20,
+        20 + p.thickness + p.airGaps[0],
+        20 + 2 * p.thickness + p.airGaps[0] + p.airGaps[1]
+      ];
+      return zFronts[p.prismCount - 1] + p.thickness + p.screenDistance;
+    }
+
+    function screenBasis(normal) {
+      const n = normalize(normal);
+      let u = vSub([1, 0, 0], vScale(n, dot([1, 0, 0], n)));
+      if (norm(u) < 1e-8) u = vSub([0, 1, 0], vScale(n, dot([0, 1, 0], n)));
+      u = normalize(u);
+      const v = normalize(cross(n, u));
+      return {u, v};
+    }
+
+    function makeScreenFrame(p, initialTrace) {
+      if (p.screenMode === "normal" && initialTrace && initialTrace.valid && finiteVec(initialTrace.outputOrigin) && finiteVec(initialTrace.outputDir)) {
+        const normal = normalize(initialTrace.outputDir);
+        const point = vAdd(initialTrace.outputOrigin, vScale(normal, p.screenDistance));
+        const basis = screenBasis(normal);
+        return {
+          mode: "normal",
+          name: "初始出射光垂直屏",
+          title: "荧幕平面扫描轨迹 - 初始出射光垂直屏",
+          xLabel: "垂直屏坐标 u / mm",
+          yLabel: "垂直屏坐标 v / mm",
+          point,
+          normal,
+          u: basis.u,
+          v: basis.v
+        };
+      }
+      return {
+        mode: "xy",
+        name: "xy 平行屏",
+        title: "荧幕平面扫描轨迹 - xy 平行屏",
+        xLabel: "screen x / mm",
+        yLabel: "screen y / mm",
+        point: [0, 0, outputScreenZ(p)],
+        normal: [0, 0, 1],
+        u: [1, 0, 0],
+        v: [0, 1, 0]
+      };
+    }
+
+    function attachScreenHit(trace, screenFrame) {
+      if (!trace.valid) return trace;
+      const screenPoint = intersectPlane(trace.outputOrigin, trace.outputDir, screenFrame.point, screenFrame.normal);
+      if (!screenPoint) {
+        return {
+          ...trace,
+          valid: false,
+          reason: `出射光未打到${screenFrame.name}`,
+          screenFrame
+        };
+      }
+      const rel = vSub(screenPoint, screenFrame.point);
+      return {
+        ...trace,
+        screenFrame,
+        screenPoint,
+        screenUV: [dot(rel, screenFrame.u), dot(rel, screenFrame.v)]
+      };
+    }
+
+    function traceOne(p, time, screenFrame, beamIndex = null) {
+      return attachScreenHit(tracePrisms(p, time, beamIndex), screenFrame);
+    }
+
+    function simulate(p) {
+      const rows = [];
+      let invalid = 0;
+      const reasons = new Map();
+      const initialTrace = tracePrisms(p, 0, null);
+      const screenFrame = makeScreenFrame(p, initialTrace);
+      const screenStats = {
+        valid: 0,
+        minU: Infinity,
+        maxU: -Infinity,
+        minV: Infinity,
+        maxV: -Infinity,
+        maxRadius: 0
+      };
+      for (let i = 0; i < p.samples; i++) {
+        const t = p.duration * i / Math.max(1, p.samples - 1);
+        for (let b = 0; b < p.beamCount; b++) {
+          const one = traceOne(p, t, screenFrame, b);
+          one.t = t;
+          one.beam = b + 1;
+          rows.push(one);
+          if (one.valid) {
+            const u = one.screenUV[0], v = one.screenUV[1];
+            screenStats.valid++;
+            screenStats.minU = Math.min(screenStats.minU, u);
+            screenStats.maxU = Math.max(screenStats.maxU, u);
+            screenStats.minV = Math.min(screenStats.minV, v);
+            screenStats.maxV = Math.max(screenStats.maxV, v);
+            screenStats.maxRadius = Math.max(screenStats.maxRadius, Math.hypot(u, v));
+          } else {
+            invalid++;
+            reasons.set(one.reason, (reasons.get(one.reason) || 0) + 1);
+          }
+        }
+      }
+      if (!screenStats.valid) {
+        screenStats.minU = -1;
+        screenStats.maxU = 1;
+        screenStats.minV = -1;
+        screenStats.maxV = 1;
+      }
+      const result = {params: p, rows, invalid, reasons, screenFrame, screenStats};
+      result.plotPoints = collectScreenPoints(result, 18000);
+      result.geometryPoints = collectScreenPoints(result, 4000);
+      return result;
+    }
+
+    function prismFronts(p) {
+      return [
+        20,
+        20 + p.thickness + p.airGaps[0],
+        20 + 2 * p.thickness + p.airGaps[0] + p.airGaps[1]
+      ];
+    }
+
+    function surfaceZRange(surface, axis, radius) {
+      const n = surface.normal;
+      const lateral = Math.hypot(n[0], n[1]);
+      const delta = Math.abs(n[2]) < EPS ? 0 : radius * lateral / Math.abs(n[2]);
+      const centerZ = zOnSurface(surface, axis[0], axis[1]);
+      return [centerZ - delta, centerZ + delta];
+    }
+
+    function prismZEnvelope(p, q) {
+      const fronts = prismFronts(p);
+      const surfaces = surfaceSequence(p, q, p.phases[q], fronts[q]);
+      const radius = p.diameter / 2;
+      const ranges = surfaces.map(surface => surfaceZRange(surface, p.axes[q], radius));
+      return {
+        min: Math.min(...ranges.map(r => r[0])),
+        max: Math.max(...ranges.map(r => r[1]))
+      };
+    }
+
+    function geometryWarnings(p) {
+      const warnings = [];
+      const radius = p.diameter / 2;
+      const activeAlphas = p.alphas.slice(0, p.prismCount);
+      const needs = activeAlphas.map(alpha => radius * Math.tan(Math.abs(deg2rad(alpha))));
+      const need = Math.max(...needs);
+      if (p.thickness <= need + 1e-9) {
+        warnings.push(`中心厚度偏小：当前 D=${formatTick(p.diameter)} mm、最大楔角=${formatTick(Math.max(...activeAlphas.map(a => Math.abs(a))))}°，中心厚度最好大于约 ${formatTick(need)} mm，否则楔镜边缘会出现零厚度或负厚度。`);
+      }
+      const envelopes = Array.from({length: p.prismCount}, (_, q) => prismZEnvelope(p, q));
+      for (let q = 0; q < p.prismCount - 1; q++) {
+        const clearance = envelopes[q + 1].min - envelopes[q].max;
+        if (clearance < -1e-9) {
+          warnings.push(`第${q + 1}片和第${q + 2}片楔镜包络重叠约 ${formatTick(-clearance)} mm，存在机械碰撞风险，请增大 d_air${q + 1} 或减小楔角/口径。`);
+        } else if (clearance < 1) {
+          warnings.push(`第${q + 1}片和第${q + 2}片楔镜最小间隙仅 ${formatTick(clearance)} mm，装配余量偏小。`);
+        }
+      }
+      return warnings;
+    }
+
+    function apertureWarnings(result) {
+      const p = result.params;
+      if (p.limitAperture) return [];
+      let overHits = 0;
+      let maxOver = 0;
+      result.rows.forEach(row => {
+        if (!row.hits) return;
+        row.hits.forEach(hit => {
+          const axis = p.axes[hit.prism - 1];
+          const over = Math.hypot(hit.point[0] - axis[0], hit.point[1] - axis[1]) - p.diameter / 2;
+          if (over > 1e-9) {
+            overHits++;
+            maxOver = Math.max(maxOver, over);
+          }
+        });
+      });
+      if (!overHits) return [];
+      return [`限制有效口径已关闭：当前有 ${overHits} 个折射面命中点落在 D/2 外，最大超出约 ${formatTick(maxOver)} mm；三维图中光线跑到圆盘外是尺寸/口径裁剪关闭造成的。`];
+    }
+
+    function setupCanvas(canvas) {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const w = Math.max(320, Math.floor(rect.width));
+      const h = Math.max(240, Math.floor(rect.height));
+      if (canvas.width !== Math.floor(w * dpr) || canvas.height !== Math.floor(h * dpr)) {
+        canvas.width = Math.floor(w * dpr);
+        canvas.height = Math.floor(h * dpr);
+      }
+      const ctx = canvas.getContext("2d");
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+      return {ctx, w, h};
+    }
+
+    function colorMap(v) {
+      const stops = [
+        [0.00, [37, 52, 148]],
+        [0.25, [34, 144, 140]],
+        [0.50, [85, 198, 102]],
+        [0.70, [246, 208, 67]],
+        [0.86, [238, 117, 48]],
+        [1.00, [165, 28, 48]]
+      ];
+      const x = Math.max(0, Math.min(1, v));
+      for (let i = 0; i < stops.length - 1; i++) {
+        const a = stops[i], b = stops[i + 1];
+        if (x >= a[0] && x <= b[0]) {
+          const f = (x - a[0]) / (b[0] - a[0]);
+          const r = Math.round(a[1][0] + f * (b[1][0] - a[1][0]));
+          const g = Math.round(a[1][1] + f * (b[1][1] - a[1][1]));
+          const bl = Math.round(a[1][2] + f * (b[1][2] - a[1][2]));
+          return `rgb(${r},${g},${bl})`;
+        }
+      }
+      return "rgb(165,28,48)";
+    }
+
+    function niceTickStep(span) {
+      if (!Number.isFinite(span) || span <= 0) return 1;
+      const raw = span / 6;
+      const power = Math.pow(10, Math.floor(Math.log10(raw)));
+      const fraction = raw / power;
+      if (fraction <= 1) return power;
+      if (fraction <= 2) return 2 * power;
+      if (fraction <= 5) return 5 * power;
+      return 10 * power;
+    }
+
+    function formatTick(x) {
+      if (!Number.isFinite(x)) return "";
+      if ((Math.abs(x) >= 10000 || Math.abs(x) < 0.001) && x !== 0) return x.toExponential(1);
+      return Number(x.toPrecision(4)).toString();
+    }
+
+    function paddedRange(values, fallback) {
+      const finite = values.filter(Number.isFinite);
+      if (!finite.length) return fallback;
+      let lo = Math.min(...finite), hi = Math.max(...finite);
+      if (Math.abs(hi - lo) < EPS) { lo -= 1; hi += 1; }
+      else {
+        const pad = 0.12 * (hi - lo);
+        lo -= pad; hi += pad;
+      }
+      return [lo, hi];
+    }
+
+    function equalizeRanges(xRange, yRange, area) {
+      const xSpan = xRange[1] - xRange[0];
+      const ySpan = yRange[1] - yRange[0];
+      const areaRatio = area.width / area.height;
+      const dataRatio = xSpan / ySpan;
+      if (dataRatio > areaRatio) {
+        const newY = xSpan / areaRatio;
+        const mid = (yRange[0] + yRange[1]) / 2;
+        return [xRange, [mid - newY / 2, mid + newY / 2]];
+      }
+      const newX = ySpan * areaRatio;
+      const mid = (xRange[0] + xRange[1]) / 2;
+      return [[mid - newX / 2, mid + newX / 2], yRange];
+    }
+
+    function drawAxes(ctx, area, xRange, yRange, xLabel, yLabel) {
+      const mapX = x => area.left + (x - xRange[0]) / (xRange[1] - xRange[0]) * area.width;
+      const mapY = y => area.top + area.height - (y - yRange[0]) / (yRange[1] - yRange[0]) * area.height;
+      ctx.save();
+      ctx.strokeStyle = "#d8dde6";
+      ctx.fillStyle = "#536070";
+      ctx.lineWidth = 1;
+      ctx.font = "12px Microsoft YaHei, Segoe UI, Arial";
+      const xStep = niceTickStep(xRange[1] - xRange[0]);
+      const yStep = niceTickStep(yRange[1] - yRange[0]);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      for (let x = Math.ceil(xRange[0] / xStep) * xStep; x <= xRange[1] + EPS; x += xStep) {
+        const px = mapX(x);
+        ctx.beginPath(); ctx.moveTo(px, area.top); ctx.lineTo(px, area.top + area.height); ctx.stroke();
+        ctx.fillText(formatTick(x), px, area.top + area.height + 6);
+      }
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      for (let y = Math.ceil(yRange[0] / yStep) * yStep; y <= yRange[1] + EPS; y += yStep) {
+        const py = mapY(y);
+        ctx.beginPath(); ctx.moveTo(area.left, py); ctx.lineTo(area.left + area.width, py); ctx.stroke();
+        ctx.fillText(formatTick(y), area.left - 7, py);
+      }
+      ctx.strokeStyle = "#8a94a6";
+      ctx.strokeRect(area.left, area.top, area.width, area.height);
+      ctx.fillStyle = "#18212f";
+      ctx.font = "13px Microsoft YaHei, Segoe UI, Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+      ctx.fillText(xLabel, area.left + area.width / 2, area.top + area.height + 38);
+      ctx.save();
+      ctx.translate(16, area.top + area.height / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText(yLabel, 0, 0);
+      ctx.restore();
+      ctx.restore();
+      return {mapX, mapY};
+    }
+
+    function draw2D(canvas, title, xLabel, yLabel, points, markerIndex = null, rangeHint = null, rows = null) {
+      const {ctx, w, h} = setupCanvas(canvas);
+      const area = {left: 62, top: 48, width: Math.max(160, w - 116), height: Math.max(120, h - 104)};
+      let xRange = rangeHint && rangeHint.valid ? paddedRange([rangeHint.minU, rangeHint.maxU], [-1, 1]) : paddedRange(points.map(p => p.x), [-1, 1]);
+      let yRange = rangeHint && rangeHint.valid ? paddedRange([rangeHint.minV, rangeHint.maxV], [-1, 1]) : paddedRange(points.map(p => p.y), [-1, 1]);
+      [xRange, yRange] = equalizeRanges(xRange, yRange, area);
+      ctx.fillStyle = "#18212f";
+      ctx.font = "16px Microsoft YaHei, Segoe UI, Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillText(title, w / 2, 14);
+      const {mapX, mapY} = drawAxes(ctx, area, xRange, yRange, xLabel, yLabel);
+      const tMin = points.length ? Math.min(...points.map(p => p.t)) : 0;
+      const tMax = points.length ? Math.max(...points.map(p => p.t)) : 1;
+      const tSpan = Math.max(EPS, tMax - tMin);
+      for (const pt of points) {
+        ctx.fillStyle = colorMap((pt.t - tMin) / tSpan);
+        const px = mapX(pt.x), py = mapY(pt.y);
+        if (points.length > 12000) {
+          ctx.fillRect(px - 1.1, py - 1.1, 2.2, 2.2);
+        } else {
+          ctx.beginPath();
+          ctx.arc(px, py, 2.7, 0, 2 * Math.PI);
+          ctx.fill();
+        }
+      }
+      if (points.length) {
+        drawMarker(ctx, mapX(points[0].x), mapY(points[0].y), "start");
+        const last = points[points.length - 1];
+        drawMarker(ctx, mapX(last.x), mapY(last.y), "end");
+      } else {
+        ctx.fillStyle = "#667085";
+        ctx.font = "15px Microsoft YaHei, Segoe UI, Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("没有有效点", area.left + area.width / 2, area.top + area.height / 2);
+      }
+      if (markerIndex !== null) {
+        const pt = points.find(p => p.index === markerIndex);
+        if (pt) {
+          drawMarker(ctx, mapX(pt.x), mapY(pt.y), "current");
+        } else if (rows && rows[markerIndex] && rows[markerIndex].valid) {
+          const r = rows[markerIndex];
+          drawMarker(ctx, mapX(r.screenUV[0]), mapY(r.screenUV[1]), "current");
+        }
+      }
+      if (rangeHint && rangeHint.valid && rangeHint.valid > points.length) {
+        ctx.fillStyle = "#667085";
+        ctx.font = "12px Microsoft YaHei, Segoe UI, Arial";
+        ctx.textAlign = "right";
+        ctx.textBaseline = "bottom";
+        ctx.fillText(`显示抽样 ${points.length} / ${rangeHint.valid}`, area.left + area.width, area.top + area.height - 8);
+      }
+    }
+
+    function drawMarker(ctx, x, y, kind) {
+      ctx.save();
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = kind === "current" ? 2 : 1.4;
+      if (kind === "end") {
+        ctx.fillStyle = "#f97316";
+        ctx.fillRect(x - 5, y - 5, 10, 10);
+        ctx.strokeRect(x - 5, y - 5, 10, 10);
+      } else {
+        ctx.fillStyle = kind === "current" ? "#ffffff" : "#22c55e";
+        ctx.beginPath();
+        ctx.arc(x, y, kind === "current" ? 6 : 5, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function collectScreenPoints(result, maxCount = Infinity) {
+      const pts = [];
+      const validCount = result.screenStats && result.screenStats.valid
+        ? result.screenStats.valid
+        : result.rows.reduce((count, r) => count + (r.valid ? 1 : 0), 0);
+      const stride = Math.max(1, Math.ceil(validCount / maxCount));
+      let seen = 0;
+      result.rows.forEach((r, i) => {
+        if (!r.valid) return;
+        if (seen % stride === 0) {
+          pts.push({x: r.screenUV[0], y: r.screenUV[1], t: r.t, index: i, beam: r.beam || 1, point: r.screenPoint});
+        }
+        seen++;
+      });
+      return pts;
+    }
+
+    function screenPoints(result) {
+      return result.plotPoints || collectScreenPoints(result, 25000);
+    }
+
+    function frameStartIndex(result, idx) {
+      const beams = Math.max(1, result.params.beamCount || 1);
+      const safeIdx = Math.max(0, Math.min(result.rows.length - 1, Number.isFinite(idx) ? idx : 0));
+      return Math.floor(safeIdx / beams) * beams;
+    }
+
+    function frameRows(result, idx) {
+      const beams = Math.max(1, result.params.beamCount || 1);
+      const start = frameStartIndex(result, idx);
+      return result.rows.slice(start, Math.min(result.rows.length, start + beams));
+    }
+
+    function primaryFrameRow(result, idx) {
+      const rows = frameRows(result, idx);
+      return rows.find(r => r.valid) || rows[0] || result.rows[0];
+    }
+
+    function beamColor(row, total) {
+      if (total <= 1) return "#2563eb";
+      const beam = Math.max(1, row.beam || 1);
+      return colorMap((beam - 1) / Math.max(1, total - 1));
+    }
+
+    function rayStartPoint(p, row) {
+      if (!row) return p.inputOrigin;
+      const beamIndex = Number.isFinite(row.beamIndex) ? row.beamIndex : ((row.beam || 1) - 1);
+      return beamInputOrigin(p, beamIndex);
+    }
+
+    function rayPathPoints(p, row, extension, includeScreen = true) {
+      if (!row) return [];
+      const pts = [rayStartPoint(p, row)];
+      if (row.hits) row.hits.forEach(hit => pts.push(hit.point));
+      if (includeScreen && row.valid && row.screenPoint) pts.push(row.screenPoint);
+      else if (row.outputOrigin && row.outputDir) pts.push(vAdd(row.outputOrigin, vScale(row.outputDir, extension)));
+      return pts;
+    }
+
+    function drawAll(markerIndex = null) {
+      if (!currentResult) return;
+      const frame = currentResult.screenFrame || makeScreenFrame(currentResult.params, tracePrisms(currentResult.params, 0));
+      draw2D(els.screenCanvas, frame.title, frame.xLabel, frame.yLabel, screenPoints(currentResult), markerIndex, currentResult.screenStats, currentResult.rows);
+      let idx = markerIndex;
+      if (idx === null) {
+        idx = currentResult.rows.findIndex(r => r.valid);
+        if (idx < 0) idx = 0;
+      }
+      idx = frameStartIndex(currentResult, idx);
+      drawGeometry(currentResult, idx);
+      drawPrism3DDetail(currentResult, idx);
+      drawDetail(currentResult, idx);
+    }
+
+    function projectIso(p) {
+      return [0.9 * p[0] - 0.9 * p[1], -0.42 * p[0] - 0.42 * p[1] - p[2]];
+    }
+
+    function screenFrameCorners(result) {
+      const frame = result.screenFrame;
+      if (!frame || !finiteVec(frame.point) || !finiteVec(frame.u) || !finiteVec(frame.v)) return [];
+      const maxUv = result.screenStats && result.screenStats.valid
+        ? result.screenStats.maxRadius
+        : result.params.diameter / 2;
+      const half = Math.max(result.params.diameter, maxUv * 1.15, 30);
+      return [
+        vAdd(frame.point, vAdd(vScale(frame.u, -half), vScale(frame.v, -half))),
+        vAdd(frame.point, vAdd(vScale(frame.u, half), vScale(frame.v, -half))),
+        vAdd(frame.point, vAdd(vScale(frame.u, half), vScale(frame.v, half))),
+        vAdd(frame.point, vAdd(vScale(frame.u, -half), vScale(frame.v, half)))
+      ];
+    }
+
+    function drawGeometry(result, idx) {
+      const {ctx, w, h} = setupCanvas(els.geometryCanvas);
+      const row = primaryFrameRow(result, idx);
+      const rowsAtTime = frameRows(result, idx);
+      const p = result.params;
+      const screenCorners = screenFrameCorners(result);
+      const world = [p.inputOrigin, [0,0,20], [0,0,outputScreenZ(p)], ...screenCorners];
+      const tracePoints = result.geometryPoints || screenPoints(result);
+      tracePoints.forEach(pt => {
+        if (pt.point) world.push(pt.point);
+      });
+      rowsAtTime.forEach(rr => {
+        rayPathPoints(p, rr, Math.max(120, p.diameter * 2)).forEach(pt => world.push(pt));
+      });
+      const projected = world.map(projectIso);
+      const xs = projected.map(v => v[0]), ys = projected.map(v => v[1]);
+      let minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+      if (maxX - minX < EPS) { minX -= 1; maxX += 1; }
+      if (maxY - minY < EPS) { minY -= 1; maxY += 1; }
+      const area = {left: 44, top: 52, width: w - 88, height: h - 82};
+      const scale = Math.min(area.width / (maxX - minX), area.height / (maxY - minY));
+      const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+      const map = pt => {
+        const q = projectIso(pt);
+        return [area.left + area.width / 2 + (q[0] - cx) * scale, area.top + area.height / 2 + (q[1] - cy) * scale];
+      };
+      ctx.fillStyle = "#18212f";
+      ctx.font = "16px Microsoft YaHei, Segoe UI, Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillText(`三维光路示意，t = ${formatTick(row ? row.t : 0)} s`, w / 2, 14);
+      drawAxis(ctx, map);
+      drawPrismBlocks(ctx, map, p, row);
+      if (screenCorners.length) {
+        drawPolygon(ctx, screenCorners.map(map), "rgba(37, 99, 235, 0.05)", "#bfdbfe");
+      }
+      rowsAtTime.forEach(rr => drawRay3D(ctx, map, p, rr, Math.max(120, p.diameter * 2), rowsAtTime.length, false));
+      const trace = tracePoints.filter(pt => pt.point).map(pt => map(pt.point));
+      if (p.beamCount > 1 || trace.length > 5000) {
+        drawPointCloud(ctx, trace, "rgba(37, 99, 235, 0.55)", trace.length > 12000 ? 1.1 : 1.6);
+      } else {
+        drawPolyline(ctx, trace, "rgba(37, 99, 235, 0.8)", 1.1);
+      }
+    }
+
+    function drawRay3D(ctx, map, p, row, extension, totalBeams, compact, includeScreen = true) {
+      if (!row) return;
+      const pts = rayPathPoints(p, row, extension, includeScreen);
+      if (pts.length < 2) return;
+      const color = beamColor(row, totalBeams);
+      const width = compact ? 1.3 : (totalBeams > 1 ? 1.25 : 1.8);
+      for (let i = 0; i < pts.length - 1; i++) {
+        const segmentColor = totalBeams > 1 ? color : (i >= (row.hits ? row.hits.length : 0) ? "#2563eb" : "#dc2626");
+        drawLine(ctx, map(pts[i]), map(pts[i + 1]), segmentColor, width);
+      }
+      if (!compact) {
+        drawDot(ctx, map(pts[0]), color, totalBeams > 1 ? 3.5 : 5);
+        if (row.valid && row.screenPoint) drawDot(ctx, map(row.screenPoint), color, totalBeams > 1 ? 3.5 : 5);
+      }
+    }
+
+    function drawPrism3DDetail(result, idx) {
+      const {ctx, w, h} = setupCanvas(els.prism3DCanvas);
+      const row = primaryFrameRow(result, idx);
+      const rowsAtTime = frameRows(result, idx);
+      const p = result.params;
+      const angles = row && row.angles ? row.angles : p.phases;
+      const zFronts = [
+        20,
+        20 + p.thickness + p.airGaps[0],
+        20 + 2 * p.thickness + p.airGaps[0] + p.airGaps[1]
+      ];
+      const radius = p.diameter / 2;
+      const surfacesByPrism = [];
+      const world = stablePrismViewPoints(p);
+      rowsAtTime.forEach(rr => {
+        rayPathPoints(p, rr, Math.max(45, p.diameter * 0.8), false).forEach(pt => world.push(pt));
+      });
+
+      for (let q = 0; q < p.prismCount; q++) {
+        const surfaces = surfaceSequence(p, q, angles[q], zFronts[q]);
+        const front = surfaceAperturePoints(surfaces[0], p.axes[q], radius, 72);
+        const back = surfaceAperturePoints(surfaces[1], p.axes[q], radius, 72);
+        surfacesByPrism.push({index: q + 1, surfaces, front, back});
+      }
+
+      const projected = world.map(projectIso);
+      const xs = projected.map(v => v[0]);
+      const ys = projected.map(v => v[1]);
+      let minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+      if (maxX - minX < EPS) { minX -= 1; maxX += 1; }
+      if (maxY - minY < EPS) { minY -= 1; maxY += 1; }
+      const area = {left: 36, top: 50, width: w - 72, height: h - 86};
+      const scale = Math.min(area.width / (maxX - minX), area.height / (maxY - minY));
+      const cx = (minX + maxX) / 2;
+      const cy = (minY + maxY) / 2;
+      const map = pt => {
+        const q = projectIso(pt);
+        return [area.left + area.width / 2 + (q[0] - cx) * scale, area.top + area.height / 2 + (q[1] - cy) * scale];
+      };
+
+      ctx.fillStyle = "#18212f";
+      ctx.font = "16px Microsoft YaHei, Segoe UI, Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillText(`三维镜组放大图，t = ${formatTick(row ? row.t : 0)} s`, w / 2, 14);
+
+      surfacesByPrism.forEach(item => {
+        drawApertureDisk(ctx, item.back.map(map), "rgba(37, 99, 235, 0.09)", item.surfaces[1].label === "楔面" ? "#111827" : "#94a3b8", item.surfaces[1].label === "楔面" ? 1.8 : 1.1);
+        drawApertureDisk(ctx, item.front.map(map), "rgba(125, 211, 252, 0.22)", item.surfaces[0].label === "楔面" ? "#111827" : "#64748b", item.surfaces[0].label === "楔面" ? 1.8 : 1.1);
+        for (let i = 0; i < item.front.length; i += 12) {
+          drawLine(ctx, map(item.front[i]), map(item.back[i]), "#cbd5e1", 1);
+        }
+        const center = [
+          p.axes[item.index - 1][0],
+          p.axes[item.index - 1][1],
+          zFronts[item.index - 1] + p.thickness / 2
+        ];
+        const label = map(center);
+        ctx.save();
+        ctx.fillStyle = "#18212f";
+        ctx.font = "12px Microsoft YaHei, Segoe UI, Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(`P${item.index} ${p.configs[item.index - 1]}`, label[0], label[1] - 8);
+        ctx.fillStyle = "#475467";
+        ctx.fillText(`D=${formatTick(p.diameter)}  α=${formatTick(p.alphas[item.index - 1])}°`, label[0], label[1] + 8);
+        ctx.restore();
+        drawRotationMarker3D(ctx, map, center, radius * 0.55, angles[item.index - 1], p.axes[item.index - 1]);
+      });
+
+      rowsAtTime.forEach(rr => drawRay3D(ctx, map, p, rr, Math.max(35, p.diameter * 0.65), rowsAtTime.length, true, false));
+      if (row && row.hits && row.hits.length) {
+        row.hits.forEach(hit => drawDot(ctx, map(hit.point), "#ffffff", 3.8));
+      }
+
+      ctx.fillStyle = "#536070";
+      ctx.font = "12px Microsoft YaHei, Segoe UI, Arial";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "bottom";
+      ctx.fillText(p.limitAperture ? "圆盘为正视圆形有效口径；多线束按当前时刻同时显示。" : "口径裁剪关闭：圆盘仅为D参考，光线可落在延展折射面上。", 18, h - 14);
+    }
+
+    function stablePrismViewPoints(p) {
+      const pts = [];
+      const radius = p.diameter / 2;
+      const envelopes = Array.from({length: p.prismCount}, (_, q) => prismZEnvelope(p, q));
+      const zMin = Math.min(...envelopes.map(e => e.min));
+      const zMax = Math.max(...envelopes.map(e => e.max));
+      const marginZ = Math.max(10, p.diameter * 0.18);
+      for (let q = 0; q < p.prismCount; q++) {
+        for (const z of [zMin - marginZ, zMax + marginZ, envelopes[q].min, envelopes[q].max]) {
+          for (let i = 0; i < 48; i++) {
+            const phi = 2 * Math.PI * i / 48;
+            pts.push([
+              p.axes[q][0] + radius * 1.18 * Math.cos(phi),
+              p.axes[q][1] + radius * 1.18 * Math.sin(phi),
+              z
+            ]);
+          }
+        }
+      }
+      pts.push(p.inputOrigin);
+      pts.push([0, 0, zMin - marginZ]);
+      pts.push([0, 0, zMax + marginZ]);
+      return pts;
+    }
+
+    function drawAxis(ctx, map) {
+      drawArrow(ctx, map([0,0,0]), map([80,0,0]), "#667085", "x");
+      drawArrow(ctx, map([0,0,0]), map([0,80,0]), "#667085", "y");
+      drawArrow(ctx, map([0,0,0]), map([0,0,120]), "#667085", "z");
+    }
+
+    function drawPrismBlocks(ctx, map, p, row) {
+      const zFronts = [
+        20,
+        20 + p.thickness + p.airGaps[0],
+        20 + 2 * p.thickness + p.airGaps[0] + p.airGaps[1]
+      ];
+      const angles = row && row.angles ? row.angles : p.phases;
+      for (let q = 0; q < p.prismCount; q++) {
+        const r = p.diameter / 2;
+        const surfaces = surfaceSequence(p, q, angles[q], zFronts[q]);
+        const front = surfaceAperturePoints(surfaces[0], p.axes[q], r, 64);
+        const back = surfaceAperturePoints(surfaces[1], p.axes[q], r, 64);
+        drawPolygon(ctx, back.map(map), "rgba(37, 99, 235, 0.10)", "#94a3b8");
+        drawPolygon(ctx, front.map(map), "rgba(37, 99, 235, 0.16)", "#64748b");
+        for (let i = 0; i < front.length; i += 8) {
+          drawLine(ctx, map(front[i]), map(back[i]), "#cbd5e1", 1);
+        }
+        const center = map([p.axes[q][0], p.axes[q][1], zFronts[q] + p.thickness / 2]);
+        ctx.save();
+        ctx.fillStyle = "#18212f";
+        ctx.font = "12px Microsoft YaHei, Segoe UI, Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(`P${q + 1}`, center[0], center[1] - 6);
+        ctx.restore();
+      }
+    }
+
+    function surfaceAperturePoints(surface, axis, radius, count) {
+      const pts = [];
+      for (let i = 0; i < count; i++) {
+        const phi = 2 * Math.PI * i / count;
+        const x = axis[0] + radius * Math.cos(phi);
+        const y = axis[1] + radius * Math.sin(phi);
+        pts.push([x, y, zOnSurface(surface, x, y)]);
+      }
+      return pts;
+    }
+
+    function drawDetail(result, idx) {
+      const {ctx, w, h} = setupCanvas(els.detailCanvas);
+      const p = result.params;
+      const row = primaryFrameRow(result, idx);
+      const rowsAtTime = frameRows(result, idx);
+      const angles = row && row.angles ? row.angles : [0, 0, 0];
+
+      ctx.fillStyle = "#18212f";
+      ctx.font = "16px Microsoft YaHei, Segoe UI, Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillText("折射剖面图", w / 2, 14);
+
+      const uDir = detailBasis(p, row);
+      const zFronts = [
+        20,
+        20 + p.thickness + p.airGaps[0],
+        20 + 2 * p.thickness + p.airGaps[0] + p.airGaps[1]
+      ];
+      const radius = p.diameter / 2;
+      const sections = [];
+      const pointsForRange = [];
+      for (let q = 0; q < p.prismCount; q++) {
+        const surfaces = surfaceSequence(p, q, angles[q], zFronts[q]);
+        const first = surfaceSection(surfaces[0], p.axes[q], uDir, radius);
+        const second = surfaceSection(surfaces[1], p.axes[q], uDir, radius);
+        sections.push({index: q + 1, surfaces, first, second});
+        pointsForRange.push(...first, ...second);
+      }
+
+      const rayPaths3 = rowsAtTime
+        .map(rr => rayPathPoints(p, rr, Math.max(30, p.thickness * 4), false))
+        .filter(path => path.length);
+      rayPaths3.forEach(path => path.forEach(pt => pointsForRange.push(sectionPoint(pt, uDir))));
+
+      let zRange = paddedRange(pointsForRange.map(pt => pt.z), [0, zFronts[p.prismCount - 1] + p.thickness + 30]);
+      let uRange = paddedRange(pointsForRange.map(pt => pt.u), [-radius, radius]);
+      const minUSpan = Math.max(1, p.diameter * 1.15);
+      if (uRange[1] - uRange[0] < minUSpan) {
+        const mid = (uRange[0] + uRange[1]) / 2;
+        uRange = [mid - minUSpan / 2, mid + minUSpan / 2];
+      }
+      const area = {left: 48, top: 56, width: Math.max(220, w - 86), height: Math.max(130, h - 138)};
+      const map = pt => [
+        area.left + (pt.z - zRange[0]) / (zRange[1] - zRange[0]) * area.width,
+        area.top + area.height - (pt.u - uRange[0]) / (uRange[1] - uRange[0]) * area.height
+      ];
+
+      drawDetailGrid(ctx, area, zRange, uRange);
+      sections.forEach(sec => drawSectionPrism(ctx, map, sec, p, angles[sec.index - 1]));
+      if (sections.length) {
+        drawDiameterBracket(ctx, map(sections[0].first[0]), map(sections[0].first[1]), `D=${formatTick(p.diameter)} mm`);
+      }
+
+      rowsAtTime.forEach(rr => drawSectionRay(ctx, map, p, rr, uDir, rowsAtTime.length));
+
+      if (row && row.hits) {
+        row.hits.forEach((hit, i) => {
+          const hp = sectionPoint(hit.point, uDir);
+          const mp = map(hp);
+          drawDot(ctx, mp, "#ffffff", 4.2);
+          drawNormalInSection(ctx, map, hp, hit.normal, uDir, Math.max(8, p.diameter * 0.12));
+          ctx.save();
+          ctx.fillStyle = "#18212f";
+          ctx.font = "11px Microsoft YaHei, Segoe UI, Arial";
+          ctx.textAlign = "left";
+          ctx.textBaseline = i % 2 === 0 ? "bottom" : "top";
+          const labelX = mp[0] + 7;
+          const labelY = mp[1] + (i % 2 === 0 ? -10 : 10);
+          ctx.fillText(`${hit.prism}${hit.surface[0]}`, labelX, labelY);
+          ctx.restore();
+          if (i < row.hits.length - 1) {
+            const prev = hit.refractedDir;
+            const next = row.hits[i + 1].incidentDir;
+            if (prev && next) {
+              // 两个方向在同一段内应一致；保留命中点标注即可。
+            }
+          }
+        });
+      }
+
+      ctx.fillStyle = "#536070";
+      ctx.font = "12px Microsoft YaHei, Segoe UI, Arial";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      const modeText = `${p.useAlphaRatio ? "楔角比例联动" : "楔角独立输入"}，${p.useSpeedRatio ? "速度比例联动" : "速度独立输入"}`;
+      const notes = [
+        `剖面由当前时刻的 ${2 * p.prismCount} 个真实折射面生成`,
+        rowsAtTime.length > 1 ? "多线束同时显示；颜色区分不同线束" : "红/蓝为空气段，橙色为玻璃内部光路",
+        "灰线为界面法线投影，白点为当前主线束命中点",
+        `口径 D 为沿光轴正视的圆形直径；${modeText}`
+      ];
+      let noteY = area.top + area.height + 12;
+      notes.forEach(text => {
+        ctx.fillText(text, 24, noteY);
+        noteY += 15;
+      });
+    }
+
+    function drawSectionRay(ctx, map, p, row, uDir, totalBeams) {
+      if (!row) return;
+      const pts = rayPathPoints(p, row, Math.max(30, p.thickness * 4), false).map(pt => sectionPoint(pt, uDir));
+      if (pts.length < 2) return;
+      const beamLine = totalBeams > 1;
+      const color = beamColor(row, totalBeams);
+      for (let i = 0; i < pts.length - 1; i++) {
+        const medium = i === 0 ? 1 : ((row.hits && row.hits[i - 1]) ? row.hits[i - 1].mediumOut : 1);
+        const isFinal = i >= (row.hits ? row.hits.length : 0);
+        const segmentColor = beamLine ? color : (isFinal ? "#2563eb" : (medium > 1 ? "#f97316" : "#dc2626"));
+        drawLine(ctx, map(pts[i]), map(pts[i + 1]), segmentColor, beamLine ? 1.25 : (isFinal ? 2 : 1.8));
+      }
+    }
+
+    function detailBasis(p, row) {
+      let x = 0;
+      let y = 0;
+      if (row && row.outputDir) {
+        x += row.outputDir[0] * 3;
+        y += row.outputDir[1] * 3;
+      }
+      if (row && row.hits) {
+        row.hits.forEach(hit => {
+          if (hit.normal) {
+            x += hit.normal[0];
+            y += hit.normal[1];
+          }
+          const axis = p.axes[hit.prism - 1];
+          x += (hit.point[0] - axis[0]) * 0.02;
+          y += (hit.point[1] - axis[1]) * 0.02;
+        });
+      }
+      const len = Math.hypot(x, y);
+      return len < EPS ? [1, 0] : [x / len, y / len];
+    }
+
+    function sectionPoint(point, uDir) {
+      return {z: point[2], u: point[0] * uDir[0] + point[1] * uDir[1]};
+    }
+
+    function surfaceSection(surface, axis, uDir, radius) {
+      const axisU = axis[0] * uDir[0] + axis[1] * uDir[1];
+      return [-radius, radius].map(offset => {
+        const x = axis[0] + offset * uDir[0];
+        const y = axis[1] + offset * uDir[1];
+        return {z: zOnSurface(surface, x, y), u: axisU + offset, label: surface.label};
+      });
+    }
+
+    function drawDetailGrid(ctx, area, zRange, uRange) {
+      ctx.save();
+      ctx.strokeStyle = "#e2e8f0";
+      ctx.fillStyle = "#667085";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(area.left, area.top, area.width, area.height);
+      ctx.font = "11px Microsoft YaHei, Segoe UI, Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      const zStep = niceTickStep(zRange[1] - zRange[0]);
+      for (let z = Math.ceil(zRange[0] / zStep) * zStep; z <= zRange[1] + EPS; z += zStep) {
+        const x = area.left + (z - zRange[0]) / (zRange[1] - zRange[0]) * area.width;
+        ctx.beginPath(); ctx.moveTo(x, area.top); ctx.lineTo(x, area.top + area.height); ctx.stroke();
+        ctx.fillText(formatTick(z), x, area.top + area.height + 4);
+      }
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      const uStep = niceTickStep(uRange[1] - uRange[0]);
+      for (let u = Math.ceil(uRange[0] / uStep) * uStep; u <= uRange[1] + EPS; u += uStep) {
+        const y = area.top + area.height - (u - uRange[0]) / (uRange[1] - uRange[0]) * area.height;
+        ctx.beginPath(); ctx.moveTo(area.left, y); ctx.lineTo(area.left + area.width, y); ctx.stroke();
+        ctx.fillText(formatTick(u), area.left - 5, y);
+      }
+      ctx.fillStyle = "#18212f";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+      ctx.fillText("z / mm", area.left + area.width / 2, area.top + area.height + 34);
+      ctx.save();
+      ctx.translate(12, area.top + area.height / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText("剖面横向坐标 / mm", 0, 0);
+      ctx.restore();
+      ctx.restore();
+    }
+
+    function drawSectionPrism(ctx, map, sec, p, theta) {
+      const poly = [sec.first[0], sec.second[0], sec.second[1], sec.first[1]].map(map);
+      drawPolygon(ctx, poly, "rgba(125, 211, 252, 0.24)", "#2563eb");
+      drawLine(ctx, map(sec.first[0]), map(sec.first[1]), sec.surfaces[0].label === "楔面" ? "#111827" : "#64748b", sec.surfaces[0].label === "楔面" ? 2 : 1.4);
+      drawLine(ctx, map(sec.second[0]), map(sec.second[1]), sec.surfaces[1].label === "楔面" ? "#111827" : "#64748b", sec.surfaces[1].label === "楔面" ? 2 : 1.4);
+      const center = map({
+        z: (sec.first[0].z + sec.first[1].z + sec.second[0].z + sec.second[1].z) / 4,
+        u: (sec.first[0].u + sec.first[1].u + sec.second[0].u + sec.second[1].u) / 4
+      });
+      ctx.save();
+      ctx.fillStyle = "#18212f";
+      ctx.font = "12px Microsoft YaHei, Segoe UI, Arial";
+      ctx.textAlign = "center";
+      const screenPts = poly;
+      const topY = Math.min(...screenPts.map(pt => pt[1]));
+      const bottomY = Math.max(...screenPts.map(pt => pt[1]));
+      const labelX = center[0];
+      ctx.textBaseline = "top";
+      ctx.fillText(`P${sec.index} ${p.configs[sec.index - 1]}`, labelX, topY + 12);
+      ctx.fillStyle = "#475467";
+      ctx.textBaseline = "bottom";
+      ctx.fillText(`α=${formatTick(p.alphas[sec.index - 1])}°  θ=${formatTick(((theta % 360) + 360) % 360)}°`, labelX, bottomY - 12);
+      ctx.restore();
+    }
+
+    function drawNormalInSection(ctx, map, point, normal, uDir, length) {
+      const du = normal[0] * uDir[0] + normal[1] * uDir[1];
+      const dz = normal[2];
+      const mag = Math.hypot(du, dz);
+      if (mag < EPS) return;
+      const unitU = du / mag * length;
+      const unitZ = dz / mag * length;
+      const a = {z: point.z - unitZ, u: point.u - unitU};
+      const b = {z: point.z + unitZ, u: point.u + unitU};
+      ctx.save();
+      ctx.setLineDash([4, 4]);
+      drawLine(ctx, map(a), map(b), "#64748b", 1);
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+
+    function drawDiameterBracket(ctx, a, b, text) {
+      ctx.save();
+      ctx.strokeStyle = "#0f766e";
+      ctx.fillStyle = "#0f766e";
+      ctx.lineWidth = 1.2;
+      const x = Math.min(a[0], b[0]) - 14;
+      ctx.beginPath();
+      ctx.moveTo(x, a[1]);
+      ctx.lineTo(x, b[1]);
+      ctx.stroke();
+      [a[1], b[1]].forEach(y => {
+        ctx.beginPath();
+        ctx.moveTo(x - 4, y);
+        ctx.lineTo(x + 4, y);
+        ctx.stroke();
+      });
+      ctx.font = "11px Microsoft YaHei, Segoe UI, Arial";
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      ctx.fillText(text, x - 6, (a[1] + b[1]) / 2);
+      ctx.restore();
+    }
+
+    function drawLine(ctx, a, b, color, width) {
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      ctx.beginPath();
+      ctx.moveTo(a[0], a[1]);
+      ctx.lineTo(b[0], b[1]);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawPolyline(ctx, pts, color, width) {
+      if (pts.length < 2) return;
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      ctx.beginPath();
+      ctx.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawPointCloud(ctx, pts, color, radius) {
+      if (!pts.length) return;
+      ctx.save();
+      ctx.fillStyle = color;
+      for (const pt of pts) {
+        ctx.fillRect(pt[0] - radius / 2, pt[1] - radius / 2, radius, radius);
+      }
+      ctx.restore();
+    }
+
+    function drawPolygon(ctx, pts, fill, stroke) {
+      ctx.save();
+      ctx.fillStyle = fill;
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawApertureDisk(ctx, pts, fill, stroke, width) {
+      if (!pts.length) return;
+      ctx.save();
+      ctx.fillStyle = fill;
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = width;
+      ctx.beginPath();
+      ctx.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawDot(ctx, p, color, r) {
+      ctx.save();
+      ctx.fillStyle = color;
+      ctx.strokeStyle = "#111827";
+      ctx.beginPath();
+      ctx.arc(p[0], p[1], r, 0, 2*Math.PI);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawRotationMarker3D(ctx, map, center, radius, thetaDeg, axis) {
+      const th = deg2rad(thetaDeg);
+      const start = [axis[0], axis[1], center[2]];
+      const end = [axis[0] + radius * Math.cos(th), axis[1] + radius * Math.sin(th), center[2]];
+      drawArrow(ctx, map(start), map(end), "#ea580c", "");
+    }
+
+    function drawArrow(ctx, a, b, color, label) {
+      drawLine(ctx, a, b, color, 1.4);
+      const ang = Math.atan2(b[1]-a[1], b[0]-a[0]);
+      ctx.save();
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(b[0], b[1]);
+      ctx.lineTo(b[0]-8*Math.cos(ang-0.45), b[1]-8*Math.sin(ang-0.45));
+      ctx.lineTo(b[0]-8*Math.cos(ang+0.45), b[1]-8*Math.sin(ang+0.45));
+      ctx.closePath();
+      ctx.fill();
+      if (label) {
+        ctx.font = "12px Microsoft YaHei, Segoe UI, Arial";
+        ctx.fillText(label, b[0]+8, b[1]-4);
+      }
+      ctx.restore();
+    }
+
+    function runSimulation() {
+      animationToken++;
+      try {
+        els.status.textContent = "正在计算三楔镜折射轨迹...";
+        const result = simulate(readParams());
+        currentResult = result;
+        drawAll();
+        const valid = result.rows.length - result.invalid;
+        const reasons = [...result.reasons.entries()].slice(0, 3).map(([k,v]) => `${k}: ${v}`).join("\n");
+        const warnings = [...geometryWarnings(result.params), ...apertureWarnings(result)].join("\n");
+        const plotNote = result.screenStats.valid > result.plotPoints.length
+          ? `\n显示为抽样点 ${result.plotPoints.length} / ${result.screenStats.valid}，CSV 仍保留全部计算点。`
+          : "";
+        els.status.textContent = `完成：有效点 ${valid} / ${result.rows.length}。线束 ${result.params.beamCount}，荧幕：${result.screenFrame.name}。`
+          + plotNote
+          + (reasons ? `\n无效原因：\n${reasons}` : "")
+          + (warnings ? `\n几何提示：\n${warnings}` : "");
+      } catch (err) {
+        els.status.textContent = `仿真失败：${err.message}`;
+        console.error(err);
+      }
+    }
+
+    function animateSimulation() {
+      runSimulation();
+      if (!currentResult) return;
+      const token = ++animationToken;
+      const sampleCount = currentResult.params.samples;
+      const beams = Math.max(1, currentResult.params.beamCount || 1);
+      const frameCount = Math.min(180, sampleCount);
+      const indices = [];
+      for (let i = 0; i < frameCount; i++) {
+        const sampleIndex = Math.round(i * (sampleCount - 1) / Math.max(1, frameCount - 1));
+        indices.push(sampleIndex * beams);
+      }
+      let frame = 0;
+      const speed = Math.max(0.1, Math.min(5, num("animationSpeed") || 0.5));
+      const frameDelay = Math.round(35 / speed);
+      els.status.textContent = `正在播放动画预览... 速度 ${formatTick(speed)}x`;
+      function step() {
+        if (token !== animationToken) return;
+        drawAll(indices[frame]);
+        frame++;
+        if (frame < indices.length) {
+          setTimeout(() => requestAnimationFrame(step), frameDelay);
+        } else {
+          els.status.textContent = "动画预览完成。";
+          drawAll();
+        }
+      }
+      requestAnimationFrame(step);
+    }
+
+    function csvEscape(v) {
+      const s = String(v ?? "");
+      return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    }
+
+    function csvValue(v) {
+      return Number.isFinite(v) ? String(v) : "";
+    }
+
+    function exportCsv() {
+      runSimulation();
+      if (!currentResult) return;
+      const headers = [
+        "时间_s", "线束编号", "楔镜1角度_deg", "楔镜2角度_deg", "楔镜3角度_deg",
+        "出射方向X", "出射方向Y", "出射方向Z",
+        "出射角X_deg", "出射角Y_deg",
+        "荧幕坐标U_mm", "荧幕坐标V_mm",
+        "荧幕空间X_mm", "荧幕空间Y_mm", "荧幕空间Z_mm",
+        "是否有效", "无效原因"
+      ];
+      const rows = [headers.map(csvEscape).join(",")];
+      for (const r of currentResult.rows) {
+        const row = [
+          r.t,
+          r.beam || 1,
+          ...(r.angles || [NaN,NaN,NaN]),
+          ...(r.outputDir || [NaN,NaN,NaN]),
+          ...(r.angleXY || [NaN,NaN]),
+          ...(r.screenUV || [NaN,NaN]),
+          ...(r.screenPoint || [NaN,NaN,NaN]),
+          r.valid,
+          r.reason
+        ].map(v => csvEscape(typeof v === "boolean" ? String(v) : (typeof v === "number" ? csvValue(v) : v)));
+        rows.push(row.join(","));
+      }
+      const blob = new Blob(["\ufeff" + rows.join("\n")], {type: "text/csv;charset=utf-8"});
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "risley_three_prism_trace.csv";
+      document.body.appendChild(a);
+      a.click();
+      URL.revokeObjectURL(a.href);
+      a.remove();
+      els.status.textContent = "CSV 已导出。";
+    }
+
+    function updateParamModeUI() {
+      const alphaLinked = els.useAlphaRatio.checked;
+      const speedLinked = els.useSpeedRatio.checked;
+      const thirdEnabled = els.enableThirdPrism.checked;
+      const unitText = els.speedUnit.value === "rpm" ? "转速 rpm" : "角速度 deg/s";
+      els.alpha2.disabled = alphaLinked;
+      els.alpha3.disabled = alphaLinked || !thirdEnabled;
+      els.k1.disabled = !alphaLinked;
+      els.k2.disabled = !alphaLinked || !thirdEnabled;
+      els.rpm2.disabled = speedLinked;
+      els.rpm3.disabled = speedLinked || !thirdEnabled;
+      els.M1.disabled = !speedLinked;
+      els.M2.disabled = !speedLinked || !thirdEnabled;
+      els.refractiveIndex3.disabled = !thirdEnabled;
+      els.phase3.disabled = !thirdEnabled;
+      els.config3.disabled = !thirdEnabled;
+      els.axis3X.disabled = !thirdEnabled;
+      els.axis3Y.disabled = !thirdEnabled;
+      els.speed1Label.textContent = `楔镜1${unitText}`;
+      els.speed2Label.textContent = `楔镜2${unitText}`;
+      els.speed3Label.textContent = `楔镜3${unitText}`;
+    }
+
+    function formatInputValue(value) {
+      if (!Number.isFinite(value)) return "0";
+      return Number(value.toPrecision(8)).toString();
+    }
+
+    function handleSpeedUnitChange() {
+      const nextUnit = els.speedUnit.value;
+      if (!lastSpeedUnit) {
+        lastSpeedUnit = nextUnit;
+        updateParamModeUI();
+        return;
+      }
+      if (nextUnit !== lastSpeedUnit) {
+        const factor = lastSpeedUnit === "rpm" && nextUnit === "degps" ? 6 : 1 / 6;
+        ["rpm1", "rpm2", "rpm3"].forEach(id => {
+          els[id].value = formatInputValue(num(id) * factor);
+        });
+        lastSpeedUnit = nextUnit;
+      }
+      updateParamModeUI();
+    }
+
+    els.runBtn.addEventListener("click", runSimulation);
+    els.animateBtn.addEventListener("click", animateSimulation);
+    els.exportBtn.addEventListener("click", exportCsv);
+    els.useAlphaRatio.addEventListener("change", updateParamModeUI);
+    els.useSpeedRatio.addEventListener("change", updateParamModeUI);
+    els.enableThirdPrism.addEventListener("change", updateParamModeUI);
+    els.speedUnit.addEventListener("change", handleSpeedUnitChange);
+    window.addEventListener("resize", () => drawAll());
+
+    handleSpeedUnitChange();
+    runSimulation();
+  </script>
+</body>
+</html>

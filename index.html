@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>张杨阳 · 光学仿真作品</title>
+  <meta name="description" content="交互式光学仿真作品，支持在浏览器中查看扫描轨迹、光路指向误差与运动跟踪结果，并调整模型参数。">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+  <main>
+    <header class="page-header">
+      <div><h1>张杨阳 · 光学仿真作品</h1><p>交互式光学仿真作品，可在浏览器中查看结果并调整参数。</p></div>
+      <button class="copy-link" data-copy-link>复制作品集链接</button>
+    </header>
+    <p class="note">无需下载或登录。仿真界面参数较多，建议使用电脑浏览。</p>
+    <section class="works" aria-label="仿真作品">
+      <article class="work">
+        <h2>三楔镜折射扫描仿真</h2>
+        <p>基于逐面 Snell 折射计算光线传播，分析楔镜组合的扫描轨迹与覆盖形态。</p>
+        <ul><li>调整楔角、转速比、初始相位与光束参数，对比扫描结果。</li><li>查看二维轨迹、光路几何和三维视图，支持动画预览及 CSV 导出。</li></ul>
+        <a class="open-link" href="viewer.html?project=prism">打开仿真 →</a>
+      </article>
+      <article class="work">
+        <h2>四镜库德指向误差补偿</h2>
+        <p>联动虚拟四镜平台与调试控制台，模拟误差采集、调镜补偿和精度验证。</p>
+        <ul><li>设置镜面及轴系误差，采集不同方位、俯仰姿态下的光斑脱靶量。</li><li>生成并执行调镜建议，比较补偿前后的 RMS 与最大指向误差。</li></ul>
+        <a class="open-link" href="viewer.html?project=coude">打开仿真 →</a>
+      </article>
+      <article class="work">
+        <h2>ARE 运动与跟踪演示</h2>
+        <p>在三维场景中观察 A/R/E 三轴姿态、目标视线与飞行轨迹的关系。</p>
+        <ul><li>交互调整轴系姿态，演示自动跟踪及 KF-CV / IMM 轨迹预测。</li><li>启用肩侧广角相机，观察过顶区域的视场协同过程。</li></ul>
+        <a class="open-link" href="viewer.html?project=are">打开演示 →</a>
+      </article>
+    </section>
+    <footer>以上作品为数值仿真与交互演示。</footer>
+  </main>
+  <div class="toast" role="status" aria-live="polite"></div>
+  <script src="assets/site.js"></script>
+</body>
+</html>

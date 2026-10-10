@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ARE结构动态演示 - 智能追踪与轨迹预测</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #1a252f; font-family: 'Segoe UI', sans-serif; }
+        #ui-panel {
+            position: absolute; top: 20px; left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            width: 380px; max-height: calc(100vh - 40px); overflow-y: auto; box-sizing: border-box; z-index: 10;
+        }
+        h3 { margin-top: 0; color: #2c3e50; text-align: center; border-bottom: 2px solid #3498db; padding-bottom: 10px;}
+        .slider-group { margin-bottom: 15px; display: flex; align-items: center;}
+        .slider-group label { width: 110px; font-weight: bold; color: #555; font-size: 14px;}
+        .slider-group input { flex-grow: 1; cursor: pointer; }
+        .slider-group span { width: 55px; text-align: right; font-weight: bold; color: #e74c3c; font-family: monospace; font-size: 14px;}
+        hr { border: 0; height: 1px; background: #ccc; margin: 15px 0; }
+        .data-group p { margin: 8px 0; font-size: 14px; color: #444;}
+        .data-value { font-weight: bold; color: #2980b9; font-family: monospace; font-size: 15px; float: right;}
+        
+        .toggle-btn {
+            width: 100%; padding: 10px; background: #e74c3c; color: white; border: none;
+            border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer;
+            transition: background 0.3s; margin-bottom: 10px;
+        }
+        .toggle-btn.active { background: #2ecc71; }
+
+        /* 肩侧相机设置：沿用原面板的白底、蓝色分隔与紧凑控件风格 */
+        #shoulderDetails { margin: 4px 0 12px; border: 1px solid #cfd8dc; border-radius: 7px; background: #f8fafb; }
+        #shoulderDetails > summary { padding: 9px 10px; cursor: pointer; color: #2c3e50; font-weight: bold; user-select: none; }
+        #shoulderDetails[open] > summary { border-bottom: 1px solid #dfe6e9; }
+        .module-enable { float: right; font-size: 12px; font-weight: normal; color: #607d8b; }
+        .camera-config { padding: 9px 10px 11px; }
+        .config-section { margin-top: 9px; padding-top: 8px; border-top: 1px solid #d9e1e5; }
+        .config-section:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+        .config-title { margin: 0 0 7px; color: #2980b9; font-size: 13px; font-weight: bold; }
+        .compact-row { display: flex; align-items: center; gap: 5px; margin: 5px 0; font-size: 12px; color: #4b5960; }
+        .compact-row label:first-child { flex: 0 0 105px; }
+        .compact-row input[type="number"] { width: 67px; box-sizing: border-box; }
+        .compact-row select { min-width: 72px; max-width: 145px; }
+        .compact-row input:disabled, .compact-row select:disabled { opacity: 0.5; cursor: not-allowed; }
+        #mountMap { width: 100%; height: 138px; display: block; border: 1px solid #9fb4c0; border-radius: 5px; background: #eef4f7; cursor: crosshair; box-sizing: border-box; }
+        .mini-help { margin: 5px 0; color: #78909c; font-size: 11px; line-height: 1.35; }
+        .derived-box { margin-top: 7px; padding: 6px 7px; border-left: 3px solid #3498db; background: #edf5fa; color: #455a64; font: 11px/1.45 monospace; }
+        .camera-status { display: grid; grid-template-columns: 86px 1fr; gap: 4px; margin-top: 7px; font-size: 11px; color: #52666f; }
+        .camera-status span:nth-child(even) { text-align: right; font-family: monospace; font-weight: bold; color: #d35400; }
+
+        #trackingViews {
+            position: absolute; top: 20px; right: 20px; width: 510px; z-index: 9;
+            background: rgba(255,255,255,0.95); border-radius: 10px; box-shadow: 0 8px 22px rgba(0,0,0,0.45);
+            user-select: none; overflow: hidden;
+        }
+        #trackingViewsHeader {
+            padding: 9px 12px; color: #2c3e50; font-size: 14px; font-weight: bold;
+            border-bottom: 2px solid #3498db; cursor: move; background: rgba(247,250,252,0.98);
+        }
+        #trackingViewsHeader span { float: right; color: #78909c; font-size: 11px; font-weight: normal; }
+        .view-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; padding: 10px; }
+        .camera-view { min-width: 0; }
+        .camera-view-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; color: #455a64; font-size: 12px; font-weight: bold; }
+        .power-indicator { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: normal; }
+        .power-dot { width: 9px; height: 9px; display: inline-block; border-radius: 50%; background: #95a5a6; box-shadow: 0 0 0 2px rgba(0,0,0,0.07); }
+        .power-indicator.on .power-dot { background: #2ecc71; box-shadow: 0 0 6px rgba(46,204,113,0.9); }
+        .power-indicator.off { color: #95a5a6; }
+        .tracking-canvas { width: 100%; height: 185px; display: block; box-sizing: border-box; border: 1px solid #78909c; background: #17232c; }
+
+        #instructions {
+            position: absolute; bottom: 20px; right: 20px;
+            color: #ecf0f1; background: rgba(0,0,0,0.6); padding: 12px;
+            border-radius: 8px; font-size: 13px; pointer-events: none;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div id="ui-panel">
+        <h3>ARE 跟瞄雷达系统</h3>
+        
+        <button id="trackToggle" class="toggle-btn">开启自动追踪 (Auto Track: OFF)</button>
+
+        <details id="shoulderDetails">
+            <summary>
+                肩侧广角相机
+                <span class="module-enable" onclick="event.stopPropagation()">
+                    <label><input type="checkbox" id="shoulderEnabled"> 启用</label>
+                </span>
+            </summary>
+            <div class="camera-config">
+                <div class="config-section">
+                    <div class="config-title">① 相机位置与广角镜头</div>
+                    <canvas id="mountMap" width="334" height="138" title="点击肩面俯视图设置相机安装中心"></canvas>
+                    <div class="mini-help">肩面俯视图：点击图面定位；X 向右，Z 向上，原点为方位轴中心。</div>
+                    <div class="compact-row">
+                        <label>安装坐标 X / Z</label>
+                        <input type="number" id="mountX" min="-4.5" max="4.5" step="0.1" value="-3.0">
+                        <input type="number" id="mountZ" min="-4.5" max="4.5" step="0.1" value="0.0"><span>m</span>
+                    </div>
+                    <div class="compact-row">
+                        <label>水平 / 垂直视场</label>
+                        <input type="number" id="shoulderHFov" min="60" max="179" step="1" value="140">
+                        <input type="number" id="shoulderVFov" min="40" max="179" step="1" value="110"><span>°</span>
+                    </div>
+                </div>
+
+                <div class="config-section">
+                    <div class="config-title">② 交接界限设置</div>
+                    <div class="compact-row">
+                        <label>奇异圆半径</label>
+                        <input type="number" id="singularRadius" min="1" max="45" step="0.5" value="12"><span>天顶角 °</span>
+                    </div>
+                    <div class="compact-row">
+                        <label>第一界限圈缓冲</label>
+                        <input type="number" id="outerBuffer" min="0.1" max="30" step="0.1" value="5">
+                        <select id="outerBufferMode"><option value="angle">角度 °</option><option value="time">时间 s</option></select>
+                    </div>
+                    <div class="compact-row" id="innerBufferRow">
+                        <label>内圈缓冲</label>
+                        <input type="number" id="innerBuffer" min="0.1" max="30" step="0.1" value="5">
+                        <select id="innerBufferMode"><option value="angle">角度 °</option><option value="time">时间 s</option></select>
+                    </div>
+                    <div class="compact-row">
+                        <label>驶出外圈关机延时</label>
+                        <input type="number" id="shoulderOffDelay" min="0" max="30" step="0.1" value="2.0"><span>s</span>
+                    </div>
+                    <div class="derived-box" id="boundaryDerived">等待轨迹数据…</div>
+                </div>
+
+                <div class="config-section">
+                    <div class="config-title">③ 双机传输设置</div>
+                    <div class="compact-row">
+                        <label>方位传输频率</label>
+                        <input type="number" id="transferHz" min="1" max="200" step="1" value="20"><span>Hz</span>
+                    </div>
+                    <div class="compact-row">
+                        <label style="flex-basis:auto"><input type="checkbox" id="autoInner" checked> 使用IMM品红预测自动确定出圈方位和内圈</label>
+                    </div>
+                    <div class="mini-help">勾选后，从品红色IMM预测轨迹寻找驶出奇异圆的交点；A轴面向该交点，内圈按A轴到位所需时间在同一预测轨迹上反求。</div>
+                    <div class="camera-status">
+                        <span>工作阶段</span><span id="handoverState">未启用</span>
+                        <span>肩机观测</span><span id="shoulderObservation">--</span>
+                        <span>传输数据</span><span id="transferStatus">--</span>
+                        <span>方位指令</span><span id="shoulderAzStatus">--</span>
+                        <span>IMM预计出圈</span><span id="immExitStatus">--</span>
+                    </div>
+                </div>
+
+                <div class="config-section">
+                    <div class="config-title">④ 演示与观测设置</div>
+                    <div class="compact-row">
+                        <label>全局演示速度</label>
+                        <input type="range" id="demoSpeed" min="0.05" max="2" step="0.05" value="1" style="width:130px">
+                        <span id="demoSpeedValue">1.00×</span>
+                    </div>
+                    <div class="compact-row">
+                        <label style="flex-basis:auto"><input type="checkbox" id="autoSlowEnabled" checked> 第一界限至肩机关机自动慢放</label>
+                    </div>
+                    <div class="compact-row">
+                        <label>过顶慢放倍数</label>
+                        <input type="number" id="overheadSlowFactor" min="1" max="50" step="1" value="4"><span>倍慢速</span>
+                    </div>
+                    <div class="compact-row">
+                        <label>双相机视图大小</label>
+                        <input type="range" id="trackingViewScale" min="0.7" max="1.6" step="0.1" value="1" style="width:130px">
+                        <span id="trackingViewScaleValue">100%</span>
+                    </div>
+                    <div class="derived-box">
+                        实际播放速度: <span id="effectiveSpeed">1.00×</span><br>
+                        HTML运算更新: <span id="logicHz">-- Hz</span> | 页面渲染: <span id="renderFps">-- FPS</span>
+                    </div>
+                </div>
+            </div>
+        </details>
+
+        <div class="slider-group">
+            <label>A轴 (方位 Y):</label>
+            <input type="range" id="sliderA" min="-180" max="180" value="0" step="0.001">
+            <span id="valA">0°</span>
+        </div>
+        <div class="slider-group" style="margin-bottom:5px">
+            <label>R轴范围 ±x:</label>
+            <input type="number" id="rangeX" min="5" max="90" value="30" step="1" style="width:60px">
+            <span style="font-size:12px;color:#888">(-90±x)</span>
+        </div>
+        <div class="slider-group">
+            <label>R轴 (两耳连线 X):</label>
+            <input type="range" id="sliderR" min="-120" max="-60" value="-90" step="0.001">
+            <span id="valR">-90.0°</span>
+        </div>
+        <div class="slider-group">
+            <label>E轴 (中心竖轴 Y):</label>
+            <input type="range" id="sliderE" min="-180" max="180" value="-90" step="0.001">
+            <span id="valE">-90.0°</span>
+        </div>
+        <hr>
+        <div class="data-group">
+            <p>目标距离 (Distance): <span class="data-value" id="distOut">--</span></p>
+            <p>球面方位角 (Azimuth θ): <span class="data-value" id="azOut">0.00°</span></p>
+            <p>球面俯仰角 (Elevation φ): <span class="data-value" id="elOut">0.00°</span></p>
+        </div>
+        <!-- [2026-07-17 新增] KF-CV / IMM 滤波对比数据 -->
+        <hr>
+        <div class="data-group">
+            <p>KF-CV 滤波误差 (EMA): <span class="data-value" id="kfErr" style="color:#00bcd4">--</span></p>
+            <p>IMM 滤波误差 (EMA): <span class="data-value" id="immErr" style="color:#e91e63">--</span></p>
+            <p>IMM 模型概率 μ(CV/CS/CT): <span class="data-value" id="immMu" style="color:#e67e22;font-size:12px">--</span></p>
+            <p>追踪误差 (mrad): <span class="data-value" id="trackErr" style="color:#ff0000">--</span></p>
+        </div>
+    </div>
+
+    <div id="instructions">
+        左键: 旋转视角 | 滚轮: 缩放 | 右键: 平移<br>
+        <strong>轨迹显示:</strong><br>
+        虚线：无人机完整预测轨道<br>
+        实线尾迹：10米长度渐变透明消散<br>
+        <span style="color:#00e5ff">青线</span>: KF-CV 1s外推 | <span style="color:#ff2288">品红线</span>: IMM 1s外推<br>
+        灰点: 雷达量测 (20Hz, σ=1m)
+    </div>
+
+    <div id="trackingViews">
+        <div id="trackingViewsHeader">双相机跟踪视图 <span>拖动此栏移动</span></div>
+        <div class="view-grid">
+            <div class="camera-view">
+                <div class="camera-view-title">主负载相机 <span id="mainPower" class="power-indicator on"><i class="power-dot"></i><b>开启</b></span></div>
+                <canvas id="mainView" class="tracking-canvas" width="238" height="185"></canvas>
+            </div>
+            <div class="camera-view">
+                <div class="camera-view-title">肩侧广角相机 <span id="shoulderPower" class="power-indicator off"><i class="power-dot"></i><b>关闭</b></span></div>
+                <canvas id="shoulderView" class="tracking-canvas" width="238" height="185"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入 Three.js 核心及附属模块 -->
+    <script src="vendor/three.min.js"></script>
+    <script src="vendor/OrbitControls.js"></script>
+
+    <script>
+        // --- 1. 基础场景与光照 ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
+        camera.position.set(30, 25, 40);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        document.body.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.target.set(0, 5, 0);
+
+        scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(10, 50, 20);
+        scene.add(dirLight);
+
+        // --- 2. 材质定义 ---
+        const blueMaterial = new THREE.MeshStandardMaterial({ color: 0x1e73be, metalness: 0.4, roughness: 0.3 });
+        // [2026-07-17 修改] 原码: const greenMaterial = new THREE.MeshStandardMaterial({ color: 0x2ecc71, metalness: 0.3, roughness: 0.4 }); 改为半透明
+        const greenMaterial = new THREE.MeshStandardMaterial({ color: 0x2ecc71, metalness: 0.3, roughness: 0.4, transparent: true, opacity: 0.45 });
+        // [2026-07-17 新增] 镜头粉色半透明材质
+        const pinkLensMaterial = new THREE.MeshStandardMaterial({ color: 0xff69b4, metalness: 0.2, roughness: 0.3, transparent: true, opacity: 0.5 });
+        const darkMaterial = new THREE.MeshStandardMaterial({ color: 0x222222 });
+        const silverMaterial = new THREE.MeshStandardMaterial({ color: 0xbdc3c7, metalness: 0.8, roughness: 0.2 });
+
+        // --- 3. 构建 ARE 设备结构 (工业转台模型) ---
+        const matBody = new THREE.MeshStandardMaterial({ color: 0x98a3af, roughness: 0.35, metalness: 0.2 });
+        const matMetal = new THREE.MeshStandardMaterial({ color: 0xd0d0d0, roughness: 0.3, metalness: 0.8 });
+        const matDark = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.6 });
+        const SCL = 0.08; // 缩放: 模型原始总高~120, 120*0.08≈9.6 ≈ 原模型高度
+
+        const gimbalRoot = new THREE.Group();
+        scene.add(gimbalRoot);
+
+        // 底座 (Static)
+        const baseGroup = new THREE.Group();
+        const baseGeom = new THREE.CylinderGeometry(55, 60, 45, 64);
+        const baseMesh = new THREE.Mesh(baseGeom, matBody);
+        baseMesh.position.y = 22.5;
+        baseGroup.add(baseMesh);
+        gimbalRoot.add(baseGroup);
+
+        // A轴 (Azimuth, Y) — gimbalGroup
+        const aGroup = new THREE.Group();
+        aGroup.position.y = 45;
+        baseGroup.add(aGroup);
+        // U型架底盘
+        const uBase = new THREE.Mesh(new THREE.CylinderGeometry(45, 45, 12, 64), matBody);
+        uBase.position.y = 6;
+        aGroup.add(uBase);
+        // U型架两臂
+        const armH = 65;
+        const armGeom = new THREE.BoxGeometry(18, armH, 35);
+        const lArm = new THREE.Mesh(armGeom, matBody);
+        lArm.position.set(-35, 6 + armH/2, 0);
+        aGroup.add(lArm);
+        const rArm = new THREE.Mesh(armGeom, matBody);
+        rArm.position.set(35, 6 + armH/2, 0);
+        aGroup.add(rArm);
+
+        // E轴 (Elevation/Pitch, X) — 原模型 pitchGroup
+        const pitchY = 6 + armH - 15;
+        const eGroup = new THREE.Group();
+        eGroup.position.set(0, pitchY, 0);
+        aGroup.add(eGroup);
+        const shaft = new THREE.Mesh(new THREE.CylinderGeometry(12, 12, 100, 32), matMetal);
+        shaft.rotation.z = Math.PI / 2;
+        eGroup.add(shaft);
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(24, 24, 55, 64), matBody);
+        body.position.set(0, -10, 0);
+        eGroup.add(body);
+
+        // R轴 (Roll, Y) — 原模型 rollGroup, 含连接颈, 视轴沿颈轴线
+        const rollY = -10 + 55/2;
+        const rGroup = new THREE.Group();
+        rGroup.position.set(0, rollY, 0);
+        eGroup.add(rGroup);
+        const neck = new THREE.Mesh(new THREE.CylinderGeometry(15, 15, 5, 32), matMetal);
+        neck.position.y = 2.5;
+        rGroup.add(neck);
+
+        // 整体缩放
+        baseGroup.scale.set(SCL, SCL, SCL);
+
+        // --- 肩侧广角相机：固连于A轴，光轴恒指天顶(+Y) ---
+        const SHOULDER_MOUNT_Y = 75; // aGroup局部坐标；缩放后约位于肩面上方
+        const shoulderCameraGroup = new THREE.Group();
+        aGroup.add(shoulderCameraGroup);
+        const shoulderHousing = new THREE.Mesh(
+            new THREE.BoxGeometry(15, 7, 12),
+            new THREE.MeshStandardMaterial({ color: 0xb8c7d3, roughness: 0.42, metalness: 0.25 })
+        );
+        shoulderHousing.position.y = 3.5;
+        shoulderCameraGroup.add(shoulderHousing);
+        const shoulderLens = new THREE.Mesh(
+            new THREE.CylinderGeometry(4.2, 5.2, 4, 32),
+            new THREE.MeshStandardMaterial({ color: 0x23313a, roughness: 0.2, metalness: 0.25 })
+        );
+        shoulderLens.position.y = 8.5;
+        shoulderCameraGroup.add(shoulderLens);
+        const shoulderFovLine = new THREE.LineSegments(
+            new THREE.BufferGeometry(),
+            new THREE.LineBasicMaterial({ color: 0x8e44ad, transparent: true, opacity: 0.42 })
+        );
+        shoulderCameraGroup.add(shoulderFovLine);
+        shoulderCameraGroup.visible = false;
+
+        function updateShoulderModel() {
+            const mx = parseFloat(document.getElementById('mountX').value) || 0;
+            const mz = parseFloat(document.getElementById('mountZ').value) || 0;
+            shoulderCameraGroup.position.set(mx / SCL, SHOULDER_MOUNT_Y, mz / SCL);
+
+            // 用矩形锥台线框准确表达水平/垂直视场，显示长度20m。
+            const hf = THREE.MathUtils.degToRad(Math.min(178, Math.max(1, parseFloat(document.getElementById('shoulderHFov').value) || 140)) / 2);
+            const vf = THREE.MathUtils.degToRad(Math.min(178, Math.max(1, parseFloat(document.getElementById('shoulderVFov').value) || 110)) / 2);
+            const h = 20 / SCL;
+            const x = Math.min(75 / SCL, h * Math.tan(hf));
+            const z = Math.min(75 / SCL, h * Math.tan(vf));
+            const o = new THREE.Vector3(0, 10, 0);
+            const c = [new THREE.Vector3(-x,h,z), new THREE.Vector3(x,h,z),
+                       new THREE.Vector3(x,h,-z), new THREE.Vector3(-x,h,-z)];
+            const fp = [];
+            c.forEach(v => fp.push(o, v));
+            for (let i = 0; i < 4; i++) fp.push(c[i], c[(i + 1) % 4]);
+            shoulderFovLine.geometry.setFromPoints(fp);
+            drawMountMap();
+        }
+
+        // --- 4. 球网与红线 ---
+        const targetRadius = 50;
+        const targetSphere = new THREE.Mesh(
+            new THREE.SphereGeometry(targetRadius, 32, 24),
+            new THREE.MeshBasicMaterial({ color: 0x3498db, wireframe: true, transparent: true, opacity: 0.15, side: THREE.BackSide })
+        );
+        scene.add(targetSphere);
+        scene.add(new THREE.PolarGridHelper(targetRadius, 16, 8, 64, 0x555555, 0x333333));
+
+        const lineMat = new THREE.LineBasicMaterial({ color: 0xff0000, linewidth: 2 });
+        const lineOfSight = new THREE.Line(new THREE.BufferGeometry(), lineMat);
+        lineOfSight.position.set(0, 2.5, 0); // neck中心, rGroup内
+        rGroup.add(lineOfSight);
+
+        const sightOriginMarker = new THREE.Mesh(
+            new THREE.SphereGeometry(0.25, 16, 16),
+            new THREE.MeshBasicMaterial({ color: 0xffff00 })
+        );
+        sightOriginMarker.position.set(0, 2.5, 0); // neck中心, rGroup内
+        rGroup.add(sightOriginMarker);
+        const hitMarker = new THREE.Mesh(new THREE.SphereGeometry(1.5, 16, 16), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
+        scene.add(hitMarker);
+
+        // 天顶方向域的三条业务界限：第一界限圈 / 奇异圆 / 第二界限内圈。
+        const boundaryRings = {
+            outer: new THREE.LineLoop(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xf1c40f, transparent: true, opacity: 0.9 })),
+            singular: new THREE.LineLoop(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xe74c3c, transparent: true, opacity: 0.95 })),
+            inner: new THREE.LineLoop(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x8e44ad, transparent: true, opacity: 0.9 }))
+        };
+        Object.values(boundaryRings).forEach(r => { r.visible = true; scene.add(r); });
+        function setBoundaryRing(ring, zenithDeg) {
+            const theta = THREE.MathUtils.degToRad(Math.max(0.1, zenithDeg));
+            const rr = targetRadius * Math.sin(theta), yy = targetRadius * Math.cos(theta);
+            const pts = [];
+            for (let i = 0; i < 128; i++) {
+                const a = i / 128 * Math.PI * 2;
+                pts.push(new THREE.Vector3(rr * Math.sin(a), yy, rr * Math.cos(a)));
+            }
+            ring.geometry.setFromPoints(pts);
+        }
+
+        // --- 5. 无人机生成与轨迹配置 ---
+        // 无人机模型
+        const droneGroup = new THREE.Group();
+        droneGroup.add(new THREE.Mesh(new THREE.BoxGeometry(4, 1.5, 4), new THREE.MeshStandardMaterial({color: 0xffffff, roughness: 0.2})));
+        const armGeo = new THREE.CylinderGeometry(0.3, 0.3, 9);
+        armGeo.rotateZ(Math.PI/2);
+        const arm1 = new THREE.Mesh(armGeo, darkMaterial); arm1.rotation.y = Math.PI/4;
+        const arm2 = new THREE.Mesh(armGeo, darkMaterial); arm2.rotation.y = -Math.PI/4;
+        droneGroup.add(arm1, arm2);
+
+        const rotors = [];
+        const rotorGeo = new THREE.CylinderGeometry(2.5, 2.5, 0.1, 16);
+        const rotorMat = new THREE.MeshBasicMaterial({color: 0x000000, transparent: true, opacity: 0.7});
+        const posOffsets = [[3.2, 0.8, 3.2], [-3.2, 0.8, 3.2], [3.2, 0.8, -3.2], [-3.2, 0.8, -3.2]];
+        posOffsets.forEach(pos => {
+            const r = new THREE.Mesh(rotorGeo, rotorMat);
+            r.position.set(pos[0], pos[1], pos[2]);
+            droneGroup.add(r);
+            rotors.push(r);
+        });
+        droneGroup.scale.set(1.5, 1.5, 1.5);
+        scene.add(droneGroup);
+
+        // 轨迹函数
+        function getDronePosition(t) {
+            const radius = 200;
+            return new THREE.Vector3(
+                radius * Math.sin(t),
+                80 + 30 * Math.sin(t * 2),
+                -radius * Math.cos(t * 0.5)
+            );
+        }
+
+        // ================= 轨迹渲染组件 =================
+        
+        // [1] 预测轨迹 (全局虚线)
+        const predictedPoints = [];
+        const segments = 200;
+        // 慢项为 cos(t*0.5)，因此完整周期为 4*PI
+        for(let i=0; i<=segments; i++) {
+            const t = (i / segments) * (4 * Math.PI);
+            predictedPoints.push(getDronePosition(t));
+        }
+        const predGeom = new THREE.BufferGeometry().setFromPoints(predictedPoints);
+        const predMat = new THREE.LineDashedMaterial({
+            color: 0x7f8c8d, linewidth: 1, dashSize: 4, gapSize: 4, transparent: true, opacity: 0.6
+        });
+        const predLine = new THREE.Line(predGeom, predMat);
+        predLine.computeLineDistances(); // 必须调用，否则虚线不生效
+        scene.add(predLine);
+
+        // [2] 飞过轨迹 (渐变实线 - 自定义Shader实现Alpha衰减)
+        const TRAIL_MAX_DIST = 10.0; // 规定超过10米即完全透明
+        const TRAIL_MAX_POINTS = 500;
+        let trailHistory = [];
+        
+        const trailGeom = new THREE.BufferGeometry();
+        const positionsArr = new Float32Array(TRAIL_MAX_POINTS * 3);
+        const alphasArr = new Float32Array(TRAIL_MAX_POINTS);
+        
+        const posAttr = new THREE.BufferAttribute(positionsArr, 3);
+        posAttr.setUsage(THREE.DynamicDrawUsage);
+        trailGeom.setAttribute('position', posAttr);
+        
+        const alphaAttr = new THREE.BufferAttribute(alphasArr, 1);
+        alphaAttr.setUsage(THREE.DynamicDrawUsage);
+        trailGeom.setAttribute('alpha', alphaAttr);
+
+        const trailShaderMat = new THREE.ShaderMaterial({
+            uniforms: { color: { value: new THREE.Color(0xf1c40f) } }, // 尾迹设定为金黄色
+            vertexShader: `
+                attribute float alpha;
+                varying float vAlpha;
+                void main() {
+                    vAlpha = alpha;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform vec3 color;
+                varying float vAlpha;
+                void main() {
+                    gl_FragColor = vec4(color, vAlpha);
+                }
+            `,
+            transparent: true,
+            depthWrite: false
+        });
+        const trailLine = new THREE.Line(trailGeom, trailShaderMat);
+        scene.add(trailLine);
+        // ==================================================
+
+        // ================= [2026-07-17 新增] KF-CV 与 IMM 跟踪滤波对比 =================
+        // 量测: 真值+高斯噪声(20Hz, σ=1m)。F/Q/H均块对角 → 三轴解耦滤波, 与整体滤波严格等价。
+        // KF-CV: 每轴2维[p,v]匀速模型;
+        // IMM:   每轴2个3维[p,v,a]模型 (M1: jerk噪声小=平稳, M2: 大=机动) + 马尔可夫软切换。
+        const MEAS_DT = 0.05, MEAS_SIGMA = 1.0, MEAS_R = MEAS_SIGMA * MEAS_SIGMA;
+        const PRED_HORIZON = 1.0, PRED_PTS = 25;
+
+        function gaussRand() {
+            let u = 0, v = 0;
+            while (u === 0) u = Math.random();
+            while (v === 0) v = Math.random();
+            return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+        }
+
+        // 单轴卡尔曼滤波: n=2(CV) 或 n=3(CA结构), 标量位置量测
+        class AxisKF {
+            constructor(n, q) { this.n = n; this.q = q; this.x = new Array(n).fill(0); this.P = this.diag(1e4); }
+            diag(s) {
+                const M = [];
+                for (let i = 0; i < this.n; i++) { M.push(new Array(this.n).fill(0)); M[i][i] = s; }
+                return M;
+            }
+            setState(x, P) { this.x = x.slice(); this.P = P.map(r => r.slice()); }
+            predict(dt) {
+                const n = this.n, x = this.x, P = this.P;
+                const F = this.diag(1);
+                F[0][0] = 1; F[1][1] = 1; F[0][1] = dt;
+                if (n === 3) { F[2][2] = 1; F[0][2] = dt * dt / 2; F[1][2] = dt; }
+                const nx = new Array(n).fill(0);
+                for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) nx[i] += F[i][j] * x[j];
+                const FP = [], nP = [];
+                for (let i = 0; i < n; i++) {
+                    FP.push(new Array(n).fill(0));
+                    for (let j = 0; j < n; j++) for (let k = 0; k < n; k++) FP[i][j] += F[i][k] * P[k][j];
+                }
+                for (let i = 0; i < n; i++) {
+                    nP.push(new Array(n).fill(0));
+                    for (let j = 0; j < n; j++) for (let k = 0; k < n; k++) nP[i][j] += FP[i][k] * F[j][k];
+                }
+                const q = this.q, dt2 = dt * dt, dt3 = dt2 * dt;
+                if (n === 2) {          // 加速度白噪声积分
+                    nP[0][0] += q * dt3 / 3; nP[0][1] += q * dt2 / 2;
+                    nP[1][0] += q * dt2 / 2; nP[1][1] += q * dt;
+                } else {                // jerk白噪声积分
+                    const d5 = dt3 * dt2 / 20, d4 = dt2 * dt2 / 8;
+                    nP[0][0] += q * d5;      nP[0][1] += q * d4;      nP[0][2] += q * dt3 / 6;
+                    nP[1][0] += q * d4;      nP[1][1] += q * dt3 / 3; nP[1][2] += q * dt2 / 2;
+                    nP[2][0] += q * dt3 / 6; nP[2][1] += q * dt2 / 2; nP[2][2] += q * dt;
+                }
+                this.x = nx; this.P = nP;
+            }
+            update(z) {
+                const n = this.n, x = this.x, P = this.P;
+                const nu = z - x[0], S = P[0][0] + MEAS_R;
+                const K = [];
+                for (let i = 0; i < n; i++) K.push(P[i][0] / S);
+                for (let i = 0; i < n; i++) x[i] += K[i] * nu;
+                const row0 = P[0].slice();
+                for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) P[i][j] -= K[i] * row0[j];
+                return { nu, S };
+            }
+        }
+
+        // KF-CV: 三轴独立, q=20 m²/s³ (常规调参, 机动段必然滞后 → 对比基准)
+        const kfcv = [new AxisKF(2, 20), new AxisKF(2, 20), new AxisKF(2, 20)];
+
+        // [2026-07-18 升级] IMM: 2模型双噪声级 → 3模型 CV+CS(Singer)+CT(协调转弯)
+        // CT水平面x-z耦合(转弯率ω̂由融合状态估计), 无法三轴解耦 → 统一9维状态
+        // [x,vx,ax, y,vy,ay, z,vz,az]; 量测R对角 → 序贯标量更新, 似然连乘=联合似然(链式分解严格等价)
+        const CS_TAU = 1.0;                                  // Singer机动时间常数 (s)
+        const IMM_TPM = [[0.95, 0.025, 0.025], [0.025, 0.95, 0.025], [0.025, 0.025, 0.95]];
+        let immMu = [1 / 3, 1 / 3, 1 / 3];
+        let lastOmega = 0;
+
+        function diag9(vals) {                               // vals: 长9数组或标量
+            const M = [];
+            for (let i = 0; i < 9; i++) { M.push(new Array(9).fill(0)); M[i][i] = Array.isArray(vals) ? vals[i] : vals; }
+            return M;
+        }
+        function eye9() { return diag9(1); }
+
+        function F_CV(dt) {
+            const F = eye9();
+            for (let ax = 0; ax < 3; ax++) { const o = ax * 3; F[o][o + 1] = dt; F[o + 2][o + 2] = 0; }
+            return F;
+        }
+        function F_CS(dt, beta) {                            // CA结构+加速度一阶马尔可夫衰减
+            const F = eye9();
+            for (let ax = 0; ax < 3; ax++) {
+                const o = ax * 3;
+                F[o][o + 1] = dt; F[o][o + 2] = dt * dt / 2; F[o + 1][o + 2] = dt; F[o + 2][o + 2] = beta;
+            }
+            return F;
+        }
+        function F_CT(dt, w) {                               // 绕y轴转弯率w, x-z耦合; y轴CA
+            const F = eye9();
+            F[3][4] = dt; F[3][5] = dt * dt / 2; F[4][5] = dt;
+            const wd = w * dt, cw = Math.cos(wd), sw = Math.sin(wd);
+            let s, c1;
+            if (Math.abs(w) < 1e-4) { s = dt; c1 = 0.5 * dt * dt * w; }
+            else { s = sw / w; c1 = (1 - cw) / w; }
+            F[0][1] = s;  F[0][7] = -c1;                     // x' = x + s·vx − c1·vz
+            F[6][7] = s;  F[6][1] = c1;                      // z' = z + c1·vx + s·vz
+            F[1][1] = cw; F[1][7] = -sw;                     // vx' = cw·vx − sw·vz
+            F[7][1] = sw; F[7][7] = cw;                      // vz' = sw·vx + cw·vz
+            F[2][2] = 0; F[2][1] = -w * sw; F[2][7] = -w * cw;   // a = ω×v 一致性
+            F[8][8] = 0; F[8][1] = w * cw;  F[8][7] = -w * sw;
+            return F;
+        }
+        function addQaxis(P, o, q, dt, order) {              // 按轴块叠加过程噪声
+            const dt2 = dt * dt, dt3 = dt2 * dt;
+            if (order === 2) {                               // 加速度白噪声(CV), a槽微噪声防奇异
+                P[o][o] += q * dt3 / 3; P[o][o + 1] += q * dt2 / 2;
+                P[o + 1][o] += q * dt2 / 2; P[o + 1][o + 1] += q * dt;
+                P[o + 2][o + 2] += 0.01;
+            } else {                                         // jerk白噪声(CS/CT)
+                const d5 = dt3 * dt2 / 20, d4 = dt2 * dt2 / 8;
+                P[o][o] += q * d5;      P[o][o + 1] += q * d4;      P[o][o + 2] += q * dt3 / 6;
+                P[o + 1][o] += q * d4;  P[o + 1][o + 1] += q * dt3 / 3; P[o + 1][o + 2] += q * dt2 / 2;
+                P[o + 2][o] += q * dt3 / 6; P[o + 2][o + 1] += q * dt2 / 2; P[o + 2][o + 2] += q * dt;
+            }
+        }
+
+        class KF9 {
+            constructor() { this.x = new Array(9).fill(0); this.P = diag9(1e4); }
+            setState(x, P) { this.x = x.slice(); this.P = P.map(r => r.slice()); }
+            predict(F, addQ) {
+                const x = this.x, P = this.P;
+                const nx = new Array(9).fill(0);
+                for (let i = 0; i < 9; i++) for (let j = 0; j < 9; j++) nx[i] += F[i][j] * x[j];
+                const FP = [], nP = [];
+                for (let i = 0; i < 9; i++) {
+                    FP.push(new Array(9).fill(0));
+                    for (let j = 0; j < 9; j++) { let s = 0; for (let k = 0; k < 9; k++) s += F[i][k] * P[k][j]; FP[i][j] = s; }
+                }
+                for (let i = 0; i < 9; i++) {
+                    nP.push(new Array(9).fill(0));
+                    for (let j = 0; j < 9; j++) { let s = 0; for (let k = 0; k < 9; k++) s += FP[i][k] * F[j][k]; nP[i][j] = s; }
+                }
+                addQ(nP);
+                this.x = nx; this.P = nP;
+            }
+            updateSeq(z) {                                   // 序贯标量更新, 返回联合似然
+                const x = this.x, P = this.P;
+                let L = 1;
+                for (let m = 0; m < 3; m++) {
+                    const h = m * 3;
+                    const nu = z[m] - x[h], S = P[h][h] + MEAS_R;
+                    const K = [];
+                    for (let i = 0; i < 9; i++) K.push(P[i][h] / S);
+                    for (let i = 0; i < 9; i++) x[i] += K[i] * nu;
+                    const rowH = P[h].slice();
+                    for (let i = 0; i < 9; i++) for (let j = 0; j < 9; j++) P[i][j] -= K[i] * rowH[j];
+                    L *= Math.exp(-0.5 * nu * nu / S) / Math.sqrt(2 * Math.PI * S);
+                }
+                return L;
+            }
+        }
+
+        const imm = [new KF9(), new KF9(), new KF9()];       // 0:CV 1:CS 2:CT
+
+        function immFused() {                                // [axis][p,v,a]
+            const out = [];
+            for (let ax = 0; ax < 3; ax++) {
+                const o = ax * 3, s = [0, 0, 0];
+                for (let j = 0; j < 3; j++) for (let k = 0; k < 3; k++) s[k] += immMu[j] * imm[j].x[o + k];
+                out.push(s);
+            }
+            return out;
+        }
+
+        function immStep(z, dt) {
+            // 转弯率估计 ω̂ = (vx·az − vz·ax)/|v_h|², 来自上一步融合状态
+            const f = immFused();
+            const vx = f[0][1], vz = f[2][1], axc = f[0][2], azc = f[2][2];
+            const vh2 = vx * vx + vz * vz;
+            lastOmega = vh2 > 1 ? Math.max(-1.5, Math.min(1.5, (vx * azc - vz * axc) / vh2)) : 0;
+
+            const Fs = [F_CV(dt), F_CS(dt, Math.exp(-dt / CS_TAU)), F_CT(dt, lastOmega)];
+            const Qs = [
+                P => { for (let ax = 0; ax < 3; ax++) addQaxis(P, ax * 3, 5, dt, 2); },
+                P => { for (let ax = 0; ax < 3; ax++) addQaxis(P, ax * 3, 500, dt, 3); },
+                P => { for (let ax = 0; ax < 3; ax++) addQaxis(P, ax * 3, 50, dt, 3); }
+            ];
+
+            // 1) 输入交互混合 (9维)
+            const cbar = [0, 1, 2].map(j => IMM_TPM[0][j] * immMu[0] + IMM_TPM[1][j] * immMu[1] + IMM_TPM[2][j] * immMu[2]);
+            const muMix = [0, 1, 2].map(i => [0, 1, 2].map(j => IMM_TPM[i][j] * immMu[i] / cbar[j]));
+            const xs = imm.map(m => m.x.slice());
+            const Ps = imm.map(m => m.P.map(r => r.slice()));
+            for (let j = 0; j < 3; j++) {
+                const x0 = new Array(9).fill(0), P0 = diag9(0);
+                for (let i = 0; i < 3; i++) for (let k = 0; k < 9; k++) x0[k] += muMix[i][j] * xs[i][k];
+                for (let i = 0; i < 3; i++) {
+                    const dx = [];
+                    for (let k = 0; k < 9; k++) dx.push(xs[i][k] - x0[k]);
+                    for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++)
+                        P0[r][c] += muMix[i][j] * (Ps[i][r][c] + dx[r] * dx[c]);
+                }
+                imm[j].setState(x0, P0);
+            }
+            // 2) 各模型预测+序贯更新
+            const lik = [0, 0, 0];
+            for (let j = 0; j < 3; j++) {
+                imm[j].predict(Fs[j], Qs[j]);
+                lik[j] = Math.max(imm[j].updateSeq(z), 1e-300);
+            }
+            // 3) 模型概率更新
+            let c = 0;
+            const nmu = [0, 1, 2].map(j => { const v = lik[j] * cbar[j]; c += v; return v; });
+            immMu = nmu.map(v => v / c);
+        }
+
+        // μ加权多模型外推: CV直线 / CS抛物线 / CT水平圆弧+垂直抛物线
+        function immExtrapolate(tau) {
+            const f = immFused(), w = lastOmega;
+            const px = f[0][0], vx = f[0][1], ax = f[0][2];
+            const py = f[1][0], vy = f[1][1], ay = f[1][2];
+            const pz = f[2][0], vz = f[2][1], az = f[2][2];
+            const cvP = [px + vx * tau, py + vy * tau, pz + vz * tau];
+            const csP = [px + vx * tau + 0.5 * ax * tau * tau,
+                         py + vy * tau + 0.5 * ay * tau * tau,
+                         pz + vz * tau + 0.5 * az * tau * tau];
+            let s, c1;
+            if (Math.abs(w) < 1e-4) { s = tau; c1 = 0.5 * tau * tau * w; }
+            else { s = Math.sin(w * tau) / w; c1 = (1 - Math.cos(w * tau)) / w; }
+            const ctP = [px + s * vx - c1 * vz,
+                         py + vy * tau + 0.5 * ay * tau * tau,
+                         pz + c1 * vx + s * vz];
+            const mu = immMu;
+            return new THREE.Vector3(
+                mu[0] * cvP[0] + mu[1] * csP[0] + mu[2] * ctP[0],
+                mu[0] * cvP[1] + mu[1] * csP[1] + mu[2] * ctP[1],
+                mu[0] * cvP[2] + mu[1] * csP[2] + mu[2] * ctP[2]);
+        }
+
+        // 预测线与量测标记
+        const kfPredLine = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x00e5ff }));
+        const immPredLine = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xff2288 }));
+        scene.add(kfPredLine, immPredLine);
+        const immExitMarker = new THREE.Mesh(
+            new THREE.SphereGeometry(1.1, 16, 16),
+            new THREE.MeshBasicMaterial({ color: 0xff2288, transparent: true, opacity: 0.95 })
+        );
+        immExitMarker.visible = false; scene.add(immExitMarker);
+        const measMarker = new THREE.Mesh(new THREE.SphereGeometry(0.6, 8, 8), new THREE.MeshBasicMaterial({ color: 0xbbbbbb }));
+        measMarker.visible = false;
+        scene.add(measMarker);
+
+        let lastMeasMs = 0, fltInit = false, kfErrEma = null, immErrEma = null;
+        // ==================================================
+
+        // --- 6. UI交互与控制 ---
+        let autoTrack = false;
+        const toggleBtn = document.getElementById('trackToggle');
+        toggleBtn.addEventListener('click', () => {
+            autoTrack = !autoTrack;
+            axisMotion.vA = 0; axisMotion.vE = 0;
+            if (!autoTrack) resetHandover(document.getElementById('shoulderEnabled').checked ? '待自动追踪' : '未启用');
+            else if (document.getElementById('shoulderEnabled').checked) setPhase('NORMAL');
+            toggleBtn.innerText = autoTrack ? "关闭自动追踪 (Auto Track: ON)" : "开启自动追踪 (Auto Track: OFF)";
+            toggleBtn.classList.toggle("active");
+            ['sliderA','sliderR','sliderE'].forEach(id => document.getElementById(id).disabled = autoTrack);
+        });
+
+        // ================= 肩侧相机设置、二维安装图与交接状态 =================
+        const mountCanvas = document.getElementById('mountMap');
+        const mountCtx = mountCanvas.getContext('2d');
+        const trackingPanel = document.getElementById('trackingViews');
+        const trackingHeader = document.getElementById('trackingViewsHeader');
+        const mainViewCanvas = document.getElementById('mainView');
+        const shoulderViewCanvas = document.getElementById('shoulderView');
+        const mainViewCtx = mainViewCanvas.getContext('2d');
+        const shoulderViewCtx = shoulderViewCanvas.getContext('2d');
+
+        function updateTrackingViewScale() {
+            const scale = Math.max(0.7, Math.min(1.6, parseFloat(document.getElementById('trackingViewScale').value) || 1));
+            trackingPanel.style.width = (510 * scale) + 'px';
+            trackingPanel.querySelectorAll('.tracking-canvas').forEach(c => c.style.height = (185 * scale) + 'px');
+            document.getElementById('trackingViewScaleValue').innerText = Math.round(scale * 100) + '%';
+            // 缩放后若越出屏幕，自动把窗体收回可见区域。
+            const rect = trackingPanel.getBoundingClientRect();
+            if (rect.right > window.innerWidth) { trackingPanel.style.left = Math.max(0, window.innerWidth - trackingPanel.offsetWidth) + 'px'; trackingPanel.style.right = 'auto'; }
+            if (rect.bottom > window.innerHeight) trackingPanel.style.top = Math.max(0, window.innerHeight - trackingPanel.offsetHeight) + 'px';
+        }
+        document.getElementById('trackingViewScale').addEventListener('input', updateTrackingViewScale);
+        document.getElementById('demoSpeed').addEventListener('input', () => {
+            document.getElementById('demoSpeedValue').innerText = (parseFloat(document.getElementById('demoSpeed').value) || 1).toFixed(2) + '×';
+        });
+
+        // 可拖动观测窗；限制在当前窗口内，避免标题栏被拖到屏幕外。
+        let trackingDrag = null;
+        trackingHeader.addEventListener('pointerdown', ev => {
+            const rect = trackingPanel.getBoundingClientRect();
+            trackingDrag = { dx: ev.clientX - rect.left, dy: ev.clientY - rect.top };
+            trackingPanel.style.left = rect.left + 'px'; trackingPanel.style.top = rect.top + 'px'; trackingPanel.style.right = 'auto';
+            trackingHeader.setPointerCapture(ev.pointerId);
+        });
+        trackingHeader.addEventListener('pointermove', ev => {
+            if (!trackingDrag) return;
+            const maxX = Math.max(0, window.innerWidth - trackingPanel.offsetWidth);
+            const maxY = Math.max(0, window.innerHeight - trackingPanel.offsetHeight);
+            trackingPanel.style.left = Math.max(0, Math.min(maxX, ev.clientX - trackingDrag.dx)) + 'px';
+            trackingPanel.style.top = Math.max(0, Math.min(maxY, ev.clientY - trackingDrag.dy)) + 'px';
+        });
+        const stopTrackingDrag = () => { trackingDrag = null; };
+        trackingHeader.addEventListener('pointerup', stopTrackingDrag);
+        trackingHeader.addEventListener('pointercancel', stopTrackingDrag);
+
+        function setPowerIndicator(id, on) {
+            const el = document.getElementById(id);
+            el.classList.toggle('on', on); el.classList.toggle('off', !on);
+            el.querySelector('b').innerText = on ? '开启' : '关闭';
+        }
+        function drawCameraView(ctx, canvas, label, hAngle, vAngle, hFov, vFov, powered, visible, axisLabels) {
+            const w = canvas.width, h = canvas.height, pad = 20;
+            ctx.clearRect(0, 0, w, h);
+            const grad = ctx.createLinearGradient(0, 0, 0, h);
+            grad.addColorStop(0, powered ? '#1c3442' : '#20272b'); grad.addColorStop(1, powered ? '#0c171e' : '#15191c');
+            ctx.fillStyle = grad; ctx.fillRect(0, 0, w, h);
+            ctx.strokeStyle = powered ? '#557b91' : '#424b50'; ctx.lineWidth = 1;
+            for (let i = 1; i < 4; i++) {
+                const x = pad + (w - 2 * pad) * i / 4, y = pad + (h - 2 * pad) * i / 4;
+                ctx.beginPath(); ctx.moveTo(x, pad); ctx.lineTo(x, h - pad); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(w - pad, y); ctx.stroke();
+            }
+            ctx.strokeStyle = powered ? '#8fb6c9' : '#5d676c'; ctx.lineWidth = 1.2;
+            ctx.strokeRect(pad, pad, w - 2 * pad, h - 2 * pad);
+            ctx.beginPath(); ctx.moveTo(w/2 - 8, h/2); ctx.lineTo(w/2 + 8, h/2); ctx.moveTo(w/2, h/2 - 8); ctx.lineTo(w/2, h/2 + 8); ctx.stroke();
+            ctx.fillStyle = powered ? '#b7cdd8' : '#778187'; ctx.font = '10px Segoe UI';
+            ctx.textAlign = 'center'; ctx.fillText(axisLabels.top, w/2, 12); ctx.fillText(axisLabels.bottom, w/2, h - 5);
+            ctx.textAlign = 'left'; ctx.fillText(axisLabels.left, 3, h/2 + 3);
+            ctx.textAlign = 'right'; ctx.fillText(axisLabels.right, w - 3, h/2 + 3);
+            ctx.textAlign = 'left'; ctx.fillText(`${hFov.toFixed(0)}° × ${vFov.toFixed(0)}°`, pad + 4, h - pad - 5);
+
+            if (powered && visible) {
+                const nx = hAngle / THREE.MathUtils.degToRad(hFov / 2);
+                const ny = vAngle / THREE.MathUtils.degToRad(vFov / 2);
+                const px = w/2 + nx * (w/2 - pad), py = h/2 - ny * (h/2 - pad);
+                ctx.fillStyle = '#ff2b2b'; ctx.shadowColor = '#ff5252'; ctx.shadowBlur = 7;
+                ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+                ctx.fillStyle = '#ff9b9b'; ctx.font = '10px monospace'; ctx.textAlign = px > w - 70 ? 'right' : 'left';
+                ctx.fillText(`${THREE.MathUtils.radToDeg(hAngle).toFixed(1)}°, ${THREE.MathUtils.radToDeg(vAngle).toFixed(1)}°`, px + (px > w - 70 ? -7 : 7), py - 7);
+            } else {
+                ctx.fillStyle = powered ? '#90a4ae' : '#667177'; ctx.textAlign = 'center'; ctx.font = '11px Segoe UI';
+                ctx.fillText(powered ? '目标在视场外' : `${label}已关闭`, w/2, h/2 + 28);
+            }
+        }
+
+        function mainCameraObservation(targetPos) {
+            const origin = new THREE.Vector3(); lineOfSight.getWorldPosition(origin);
+            const world = targetPos.clone().sub(origin), range = world.length(), worldRay = world.clone().normalize();
+            const q = new THREE.Quaternion(); rGroup.getWorldQuaternion(q); q.invert();
+            const local = world.clone().applyQuaternion(q);
+            const hAngle = Math.atan2(local.x, local.y), vAngle = Math.atan2(local.z, local.y);
+            const hFov = 20, vFov = 15;
+            return { hAngle, vAngle, visible: local.y > 0 && Math.abs(hAngle) <= THREE.MathUtils.degToRad(hFov/2) && Math.abs(vAngle) <= THREE.MathUtils.degToRad(vFov/2), hFov, vFov, range, worldRay };
+        }
+
+        function updateTrackingViews(targetPos) {
+            const mainOn = handoverPhase !== 'SHOULDER';
+            const shoulderOn = document.getElementById('shoulderEnabled').checked && shoulderPowered;
+            setPowerIndicator('mainPower', mainOn); setPowerIndicator('shoulderPower', shoulderOn);
+            if (shoulderOn && shoulderOffDeadlineMs !== null) {
+                document.querySelector('#shoulderPower b').innerText = `延时关闭 ${(Math.max(0, shoulderOffDeadlineMs - simNowMs) / 1000).toFixed(1)}s`;
+            }
+            const mainObs = mainCameraObservation(targetPos), sideObs = shoulderObservation(targetPos);
+            drawCameraView(mainViewCtx, mainViewCanvas, '主相机', mainObs.hAngle, mainObs.vAngle,
+                mainObs.hFov, mainObs.vFov, mainOn, mainObs.visible,
+                { top:'+俯仰', bottom:'−俯仰', left:'−方位', right:'+方位' });
+            drawCameraView(shoulderViewCtx, shoulderViewCanvas, '肩侧相机', sideObs.hAngle, sideObs.vAngle,
+                parseFloat(document.getElementById('shoulderHFov').value) || 140,
+                parseFloat(document.getElementById('shoulderVFov').value) || 110,
+                shoulderOn, sideObs.visible,
+                { top:'+Z / 图像上', bottom:'−Z / 图像下', left:'−X', right:'+X' });
+        }
+
+        const MOUNT_EXTENT = 5; // 二维图显示中心±5m
+        function mountToCanvas(x, z) {
+            return [(x / (2 * MOUNT_EXTENT) + 0.5) * mountCanvas.width,
+                    (0.5 - z / (2 * MOUNT_EXTENT)) * mountCanvas.height];
+        }
+        function canvasToMount(px, py) {
+            return [(px / mountCanvas.width - 0.5) * 2 * MOUNT_EXTENT,
+                    (0.5 - py / mountCanvas.height) * 2 * MOUNT_EXTENT];
+        }
+        function drawMountMap() {
+            if (!mountCtx) return;
+            const w = mountCanvas.width, h = mountCanvas.height;
+            mountCtx.clearRect(0, 0, w, h);
+            mountCtx.fillStyle = '#eef4f7'; mountCtx.fillRect(0, 0, w, h);
+            mountCtx.strokeStyle = '#d5e1e6'; mountCtx.lineWidth = 1;
+            for (let m = -4; m <= 4; m += 2) {
+                const [gx] = mountToCanvas(m, 0), [,gz] = mountToCanvas(0, m);
+                mountCtx.beginPath(); mountCtx.moveTo(gx, 0); mountCtx.lineTo(gx, h); mountCtx.stroke();
+                mountCtx.beginPath(); mountCtx.moveTo(0, gz); mountCtx.lineTo(w, gz); mountCtx.stroke();
+            }
+            const [cx, cy] = mountToCanvas(0, 0);
+            const scaleX = w / (2 * MOUNT_EXTENT), scaleZ = h / (2 * MOUNT_EXTENT);
+            // 转台肩面俯视示意：圆形方位盘与两侧肩臂
+            mountCtx.fillStyle = '#bcc7cf'; mountCtx.strokeStyle = '#7b8d98'; mountCtx.lineWidth = 2;
+            mountCtx.beginPath(); mountCtx.ellipse(cx, cy, 2.4 * scaleX, 2.4 * scaleZ, 0, 0, Math.PI * 2); mountCtx.fill(); mountCtx.stroke();
+            mountCtx.fillStyle = '#d4dce1';
+            mountCtx.fillRect(cx - 4.2 * scaleX, cy - 1.15 * scaleZ, 1.55 * scaleX, 2.3 * scaleZ);
+            mountCtx.fillRect(cx + 2.65 * scaleX, cy - 1.15 * scaleZ, 1.55 * scaleX, 2.3 * scaleZ);
+            mountCtx.strokeStyle = '#3498db'; mountCtx.lineWidth = 1.2;
+            mountCtx.beginPath(); mountCtx.moveTo(cx, 0); mountCtx.lineTo(cx, h); mountCtx.stroke();
+            mountCtx.beginPath(); mountCtx.moveTo(0, cy); mountCtx.lineTo(w, cy); mountCtx.stroke();
+            mountCtx.fillStyle = '#2980b9'; mountCtx.font = '11px Segoe UI';
+            mountCtx.fillText('+X', w - 20, cy - 4); mountCtx.fillText('+Z', cx + 4, 12);
+            const mx = parseFloat(document.getElementById('mountX').value) || 0;
+            const mz = parseFloat(document.getElementById('mountZ').value) || 0;
+            const [px, py] = mountToCanvas(mx, mz);
+            mountCtx.fillStyle = '#8e44ad'; mountCtx.strokeStyle = '#ffffff'; mountCtx.lineWidth = 2;
+            mountCtx.beginPath(); mountCtx.arc(px, py, 6, 0, Math.PI * 2); mountCtx.fill(); mountCtx.stroke();
+            mountCtx.fillStyle = '#2c3e50'; mountCtx.fillText(`(${mx.toFixed(1)}, ${mz.toFixed(1)}) m`, Math.min(w - 82, px + 9), Math.max(12, py - 7));
+        }
+        mountCanvas.addEventListener('click', ev => {
+            const rect = mountCanvas.getBoundingClientRect();
+            const [x, z] = canvasToMount((ev.clientX - rect.left) * mountCanvas.width / rect.width,
+                                         (ev.clientY - rect.top) * mountCanvas.height / rect.height);
+            document.getElementById('mountX').value = Math.max(-4.5, Math.min(4.5, x)).toFixed(1);
+            document.getElementById('mountZ').value = Math.max(-4.5, Math.min(4.5, z)).toFixed(1);
+            updateShoulderModel();
+        });
+
+        const shoulderInputs = ['mountX','mountZ','shoulderHFov','shoulderVFov'];
+        shoulderInputs.forEach(id => document.getElementById(id).addEventListener('input', updateShoulderModel));
+        document.getElementById('shoulderEnabled').addEventListener('change', ev => {
+            shoulderCameraGroup.visible = ev.target.checked;
+            if (!ev.target.checked) resetHandover('未启用');
+            else resetHandover(autoTrack ? phaseText.NORMAL : '待自动追踪');
+        });
+        document.getElementById('autoInner').addEventListener('change', syncAutoInnerUI);
+        function syncAutoInnerUI() {
+            const automatic = document.getElementById('autoInner').checked;
+            document.getElementById('innerBuffer').disabled = automatic;
+            document.getElementById('innerBufferMode').disabled = automatic;
+            document.getElementById('innerBufferRow').title = automatic ? '内圈正由方位轴到位时间实时推算' : '';
+        }
+
+        const AZ_VMAX = 468 * Math.PI / 180, AZ_AMAX = 851 * Math.PI / 180;
+        const EL_VMAX = 900 * Math.PI / 180, EL_AMAX = 2271 * Math.PI / 180;
+        let controlDt = 0.0167;
+        let simNowMs = 0, simTrajectoryTime = Date.now() * 0.0004, lastRealFrameMs = performance.now();
+        let overheadSlowActive = false;
+        const axisMotion = { vA: 0, vE: 0 };
+        const wrapAngle = a => Math.atan2(Math.sin(a), Math.cos(a));
+        function limitedAxis(target, previous, velocityKey, vmax, amax, dt) {
+            const error = wrapAngle(target - previous);
+            let velocity = axisMotion[velocityKey];
+            // 梯形速度控制：sqrt(2*a*剩余角度) 是恰好能在目标前刹停的速度上限。
+            // 原实现只按误差加速、没有制动距离，因而会高速越过目标并反复反转。
+            const brakingSpeed = Math.sqrt(Math.max(0, 2 * amax * Math.abs(error)));
+            const desiredVelocity = Math.sign(error) * Math.min(vmax, brakingSpeed);
+            const dvMax = amax * dt;
+            velocity += Math.max(-dvMax, Math.min(dvMax, desiredVelocity - velocity));
+            const step = velocity * dt;
+            // 小步内将穿过目标时直接落在目标并清零速度，消除离散积分的残余抖动。
+            if (Math.abs(step) >= Math.abs(error) && Math.sign(step) === Math.sign(error)) {
+                axisMotion[velocityKey] = 0;
+                return wrapAngle(target);
+            }
+            axisMotion[velocityKey] = velocity;
+            return wrapAngle(previous + step);
+        }
+        function setLimitedGimbal(targetA, targetE) {
+            // 将可变帧时长拆成≤1/60s的小步，避免掉帧或倍率变化造成控制器大步跳转。
+            let remain = Math.max(0.0001, controlDt), a = aGroup.rotation.y, e = eGroup.rotation.x;
+            while (remain > 1e-7) {
+                const dt = Math.min(1 / 60, remain);
+                a = limitedAxis(targetA, a, 'vA', AZ_VMAX, AZ_AMAX, dt);
+                e = limitedAxis(targetE, e, 'vE', EL_VMAX, EL_AMAX, dt);
+                remain -= dt;
+            }
+            aGroup.rotation.y = a; eGroup.rotation.x = e;
+            document.getElementById('sliderA').value = THREE.MathUtils.radToDeg(aGroup.rotation.y).toFixed(4);
+            document.getElementById('sliderE').value = THREE.MathUtils.radToDeg(eGroup.rotation.x).toFixed(4);
+            updateAngles();
+        }
+
+        let lastKinematicPos = null, lastKinematicMs = null;
+        let immExitPrediction = null, lockedImmExitAz = null;
+        let lastZenithDeg = null, zenithRateDeg = 0;
+        let handoverPhase = 'NORMAL', transferSeq = 0, lastTransferMs = -Infinity;
+        let shoulderPowered = false, shoulderOffDeadlineMs = null;
+        let lastShoulderAz = null, lastCommandAz = null, handoverEntryAz = null;
+        let computedInnerDeg = 0, entryArmed = true;
+        let lockedInnerDeg = null, lockedInnerFeasible = true, secondBoundaryArmed = false;
+        let lastSingularBoundaryDistance = null, leavingTrendFrames = 0;
+        const phaseText = {
+            NORMAL: '主相机跟踪', REQUEST: '请求肩机接管', SHOULDER: '肩机接管 / E轴保持',
+            PREP_MAIN: '主相机预置', REACQUIRE: '等待主相机重捕获'
+        };
+        function setPhase(phase) {
+            handoverPhase = phase;
+            document.getElementById('handoverState').innerText = phaseText[phase] || phase;
+        }
+        function resetHandover(label) {
+            handoverPhase = 'NORMAL'; transferSeq = 0; lastTransferMs = -Infinity;
+            lastShoulderAz = null; lastCommandAz = null; handoverEntryAz = null; entryArmed = true;
+            lastZenithDeg = null; zenithRateDeg = 0; axisMotion.vA = 0; axisMotion.vE = 0;
+            lockedInnerDeg = null; lockedInnerFeasible = true; secondBoundaryArmed = false;
+            lockedImmExitAz = null; immExitPrediction = null;
+            immExitMarker.visible = false;
+            lastSingularBoundaryDistance = null; leavingTrendFrames = 0;
+            shoulderPowered = false; shoulderOffDeadlineMs = null;
+            overheadSlowActive = false;
+            document.getElementById('handoverState').innerText = label || phaseText.NORMAL;
+            document.getElementById('shoulderObservation').innerText = '--';
+            document.getElementById('transferStatus').innerText = '--';
+            document.getElementById('shoulderAzStatus').innerText = '--';
+            document.getElementById('immExitStatus').innerText = '--';
+        }
+        function updateKinematics(currentPos, nowMs) { lastKinematicPos = currentPos.clone(); lastKinematicMs = nowMs; }
+        function immInstantSpeed() {
+            if (!fltInit) return 30;
+            const f = immFused();
+            return Math.max(0.1, Math.hypot(f[0][1], f[1][1], f[2][1]));
+        }
+        function bufferAngle(id, modeId, range) {
+            const value = Math.max(0, parseFloat(document.getElementById(id).value) || 0);
+            return document.getElementById(modeId).value === 'time'
+                ? THREE.MathUtils.radToDeg(immInstantSpeed() * value / Math.max(1, range)) : value;
+        }
+        function azimuthTravelTime(deltaRad) {
+            const d = Math.abs(deltaRad), accelDistance = AZ_VMAX * AZ_VMAX / AZ_AMAX;
+            return d <= accelDistance ? 2 * Math.sqrt(d / AZ_AMAX)
+                                      : 2 * AZ_VMAX / AZ_AMAX + (d - accelDistance) / AZ_VMAX;
+        }
+        function zenithAngleDegAt(point) {
+            const v = point.clone().sub(new THREE.Vector3(0, 8.1, 0));
+            return THREE.MathUtils.radToDeg(Math.acos(Math.max(-1, Math.min(1, v.y / Math.max(1e-9, v.length())))));
+        }
+        function updateImmExitPrediction(singularDeg) {
+            immExitPrediction = null;
+            immExitMarker.visible = false;
+            if (!fltInit) { document.getElementById('immExitStatus').innerText = 'IMM初始化中'; return null; }
+            const step = PRED_HORIZON / PRED_PTS, horizon = PRED_HORIZON;
+            let prevT = 0, prevP = immExtrapolate(0), prevZ = zenithAngleDegAt(prevP);
+            let passedApex = false;
+            for (let t = step; t <= horizon + 1e-9; t += step) {
+                const p = immExtrapolate(t), z = zenithAngleDegAt(p);
+                if (z > prevZ + 0.002) passedApex = true;
+                if (passedApex && prevZ < singularDeg && z >= singularDeg) {
+                    const f = Math.max(0, Math.min(1, (singularDeg - prevZ) / Math.max(1e-9, z - prevZ)));
+                    const tau = prevT + f * (t - prevT), point = prevP.clone().lerp(p, f);
+                    let az = Math.atan2(point.x, point.z);
+                    az = aGroup.rotation.y + wrapAngle(az - aGroup.rotation.y);
+                    immExitPrediction = { tau, point, az };
+                    immExitMarker.position.copy(point); immExitMarker.visible = true;
+                    document.getElementById('immExitStatus').innerText = `${tau.toFixed(2)}s / ${THREE.MathUtils.radToDeg(az).toFixed(1)}°`;
+                    return immExitPrediction;
+                }
+                prevT = t; prevP = p; prevZ = z;
+            }
+            document.getElementById('immExitStatus').innerText = `${horizon.toFixed(1)}s预测内未出圈`;
+            return null;
+        }
+        function getBoundaryConfig(range, outward) {
+            const singular = Math.max(1, Math.min(45, parseFloat(document.getElementById('singularRadius').value) || 12));
+            const outerBuf = bufferAngle('outerBuffer', 'outerBufferMode', range);
+            const userInnerBuf = bufferAngle('innerBuffer', 'innerBufferMode', range);
+            // 与原版品红线完全相同：只检查 IMM 的 1 s / 25 点预测，不另建速度统计模型。
+            const predictedExit = lockedImmExitAz === null ? updateImmExitPrediction(singular) : immExitPrediction;
+            let inner = Math.max(0.1, singular - userInnerBuf), autoText = '', autoFeasible = true;
+            if (document.getElementById('autoInner').checked) {
+                if (handoverPhase === 'SHOULDER' && lockedInnerDeg !== null) {
+                    inner = lockedInnerDeg;
+                    autoText = ` | IMM内圈已锁定 ${inner.toFixed(2)}°`;
+                } else {
+                    const pred = predictedExit;
+                    const targetAz = pred ? pred.az : (lastShoulderAz === null ? aGroup.rotation.y : lastShoulderAz);
+                    const travel = azimuthTravelTime(wrapAngle(targetAz - aGroup.rotation.y));
+                    const comm = 1 / Math.max(1, parseFloat(document.getElementById('transferHz').value) || 20);
+                    const readyTime = travel + comm;
+                    const readyPoint = pred ? immExtrapolate(Math.max(0, pred.tau - readyTime)) : null;
+                    const candidate = readyPoint ? zenithAngleDegAt(readyPoint) : 0.1;
+                    const feasible = !!pred && pred.tau > readyTime && candidate < singular - 0.05;
+                    autoFeasible = feasible;
+                    inner = feasible ? Math.max(0.1, candidate) : 0.1;
+                    computedInnerDeg = inner;
+                    autoText = feasible
+                        ? ` | IMM内圈 ${inner.toFixed(2)}° (A轴需${readyTime.toFixed(2)}s)`
+                        : ` | ⚠IMM预测时间不足，天顶后最早触发`;
+                }
+            } else computedInnerDeg = inner;
+            const outer = Math.min(89, singular + outerBuf);
+            const innerInfeasible = document.getElementById('autoInner').checked &&
+                                    ((!autoFeasible && lockedInnerDeg === null) || (lockedInnerDeg !== null && !lockedInnerFeasible));
+            const innerLabel = innerInfeasible ? '不可行(天顶后最早)' : `${inner.toFixed(2)}°`;
+            document.getElementById('boundaryDerived').innerText =
+                `第一界限圈 ${outer.toFixed(2)}° / 奇异圆 ${singular.toFixed(2)}° / 第二界限内圈 ${innerLabel}\n` +
+                `品红IMM预计出圈 ${immExitPrediction ? immExitPrediction.tau.toFixed(2) + 's' : '--'}${autoText}`;
+            return { singular, outer, inner, autoFeasible, innerInfeasible };
+        }
+
+        function shoulderObservation(targetPos) {
+            const origin = new THREE.Vector3(0, 10, 0);
+            shoulderCameraGroup.localToWorld(origin);
+            const world = targetPos.clone().sub(origin), worldRay = world.clone().normalize();
+            const q = new THREE.Quaternion(); shoulderCameraGroup.getWorldQuaternion(q); q.invert();
+            const local = world.clone().applyQuaternion(q);
+            const hAngle = Math.atan2(local.x, local.y), vAngle = Math.atan2(local.z, local.y);
+            const hLimit = THREE.MathUtils.degToRad((parseFloat(document.getElementById('shoulderHFov').value) || 140) / 2);
+            const vLimit = THREE.MathUtils.degToRad((parseFloat(document.getElementById('shoulderVFov').value) || 110) / 2);
+            const visible = local.y > 0 && Math.abs(hAngle) <= hLimit && Math.abs(vAngle) <= vLimit;
+            // 肩机图像绕光轴的局部方位β，经 A平台+β 转换为世界连续方位；包含偏置安装的视差。
+            const imageAz = Math.atan2(local.x, local.z);
+            let az = aGroup.rotation.y + imageAz;
+            if (Math.hypot(local.x, local.z) < 0.2 && lastShoulderAz !== null) az = lastShoulderAz;
+            else if (lastShoulderAz !== null) az = lastShoulderAz + wrapAngle(az - lastShoulderAz);
+            return { visible, az, imageAz, hAngle, vAngle, range: world.length(), worldRay };
+        }
+        function transmitShoulder(obs, secondBoundary) {
+            if (!obs.visible) return false;
+            transferSeq++;
+            lastShoulderAz = obs.az; lastCommandAz = obs.az; lastTransferMs = simNowMs;
+            document.getElementById('transferStatus').innerText =
+                `#${transferSeq} 已收 / 继续回传${secondBoundary ? ' / 第二界限=1' : ''}`;
+            document.getElementById('shoulderAzStatus').innerText = `${THREE.MathUtils.radToDeg(obs.az).toFixed(2)}°`;
+            return true;
+        }
+        function maybeTransmit(obs, nowMs, flag) {
+            const period = 1000 / Math.max(1, parseFloat(document.getElementById('transferHz').value) || 20);
+            return (flag || nowMs - lastTransferMs >= period) && transmitShoulder(obs, flag);
+        }
+
+        function updateShoulderPower(zenithDeg, limits, approaching, outward, nowMs, enabled) {
+            if (!enabled || !autoTrack) {
+                shoulderPowered = false; shoulderOffDeadlineMs = null; overheadSlowActive = false; return;
+            }
+            // 首次向内穿过外圈时开机；若启用时已经位于外圈内，也立即开机。
+            const crossedInward = lastZenithDeg !== null && lastZenithDeg > limits.outer && zenithDeg <= limits.outer;
+            if ((approaching && zenithDeg <= limits.outer) || crossedInward) {
+                shoulderPowered = true; shoulderOffDeadlineMs = null; overheadSlowActive = true;
+            }
+            // 越顶后向外穿出外圈，启动独立的关机延时；若再次回到外圈内则取消关机。
+            if (zenithDeg < limits.outer) shoulderOffDeadlineMs = null;
+            const crossedOutward = lastZenithDeg !== null && lastZenithDeg < limits.outer && zenithDeg >= limits.outer;
+            if (outward && crossedOutward && shoulderPowered) {
+                const delay = Math.max(0, parseFloat(document.getElementById('shoulderOffDelay').value) || 0);
+                shoulderOffDeadlineMs = nowMs + delay * 1000;
+            }
+            if (shoulderOffDeadlineMs !== null && nowMs >= shoulderOffDeadlineMs && handoverPhase === 'NORMAL') {
+                shoulderPowered = false; shoulderOffDeadlineMs = null; overheadSlowActive = false;
+            }
+        }
+
+        function updateHandover(currentPos, nowMs) {
+            const enabled = document.getElementById('shoulderEnabled').checked;
+            const sightBase = new THREE.Vector3(0, 8.1, 0);
+            const targetVec = currentPos.clone().sub(sightBase), range = targetVec.length();
+            const zenithDeg = THREE.MathUtils.radToDeg(Math.acos(Math.max(-1, Math.min(1, targetVec.y / range))));
+            const dt = lastKinematicMs === null ? 0 : Math.max(0.001, (nowMs - lastKinematicMs) / 1000);
+            if (lastZenithDeg !== null) zenithRateDeg = 0.85 * zenithRateDeg + 0.15 * ((zenithDeg - lastZenithDeg) / dt);
+            const approaching = zenithRateDeg < -0.05, outward = zenithRateDeg > 0.05;
+            const limits = getBoundaryConfig(range, outward);
+            const boundaryDistance = limits.singular - zenithDeg; // 球冠内到奇异圆最近边界的角距离
+            const boundaryDistanceShrinking = boundaryDistance >= 0 && lastSingularBoundaryDistance !== null &&
+                                               boundaryDistance < lastSingularBoundaryDistance - 0.002;
+            leavingTrendFrames = boundaryDistanceShrinking && outward ? leavingTrendFrames + 1 : 0;
+            setBoundaryRing(boundaryRings.outer, limits.outer);
+            setBoundaryRing(boundaryRings.singular, limits.singular);
+            setBoundaryRing(boundaryRings.inner, limits.inner);
+            boundaryRings.inner.visible = !limits.innerInfeasible;
+            updateShoulderPower(zenithDeg, limits, approaching, outward, nowMs, enabled);
+            const obs = shoulderObservation(currentPos);
+            document.getElementById('shoulderObservation').innerText = !shoulderPowered ? '相机关闭' : (obs.visible
+                ? `已捕获 (${THREE.MathUtils.radToDeg(obs.hAngle).toFixed(1)}°, ${THREE.MathUtils.radToDeg(obs.vAngle).toFixed(1)}°)` : '视场外');
+
+            if (!enabled || !autoTrack) {
+                if (!enabled) document.getElementById('handoverState').innerText = '未启用';
+                else document.getElementById('handoverState').innerText = '待自动追踪';
+                if (autoTrack) solveIKForDrone(currentPos);
+                lastSingularBoundaryDistance = boundaryDistance;
+                lastZenithDeg = zenithDeg;
+                return;
+            }
+            // 用户可能在目标已经进入外圈后才开启功能；仍允许立即发起接管，避免必须等下一周期。
+            if (handoverPhase === 'NORMAL' && entryArmed && approaching && zenithDeg <= limits.outer) {
+                setPhase('REQUEST'); handoverEntryAz = aGroup.rotation.y;
+                document.getElementById('transferStatus').innerText = '主机发送目标数据 + 接管指令';
+            }
+            if (zenithDeg > limits.outer + 1) entryArmed = true;
+
+            if (handoverPhase === 'NORMAL') {
+                solveIKForDrone(currentPos);
+                if (entryArmed && approaching && lastZenithDeg !== null && lastZenithDeg > limits.outer && zenithDeg <= limits.outer) {
+                    setPhase('REQUEST'); handoverEntryAz = aGroup.rotation.y;
+                    document.getElementById('transferStatus').innerText = '主机发送目标数据 + 接管指令';
+                }
+            }
+            if (handoverPhase === 'REQUEST') {
+                solveIKForDrone(currentPos); // 收到成功应答前主机继续工作
+                if (shoulderPowered && transmitShoulder(obs, false)) {
+                    setPhase('SHOULDER'); entryArmed = false;
+                    if (document.getElementById('autoInner').checked) {
+                        // 预测交点尚未进入原版 1 s 品红线时保持当前轴位，后续帧继续等待，不回退到天顶瞬时方位。
+                        const pred = immExitPrediction || updateImmExitPrediction(limits.singular);
+                        lockedImmExitAz = pred ? pred.az : null;
+                        lockedInnerDeg = pred ? limits.inner : null;
+                        lockedInnerFeasible = !!pred && limits.autoFeasible;
+                    } else {
+                        lockedInnerDeg = limits.inner; lockedInnerFeasible = true;
+                        lockedImmExitAz = null;
+                    }
+                    secondBoundaryArmed = false; leavingTrendFrames = 0;
+                }
+            } else if (handoverPhase === 'SHOULDER' || handoverPhase === 'PREP_MAIN' || handoverPhase === 'REACQUIRE') {
+                maybeTransmit(obs, nowMs, false);
+                const autoPrediction = document.getElementById('autoInner').checked;
+                // 目标的预计出圈点进入品红预测线后锁定一次，避免预测噪声让方位目标来回漂移。
+                if (handoverPhase === 'SHOULDER' && autoPrediction && lockedImmExitAz === null && immExitPrediction) {
+                    lockedImmExitAz = immExitPrediction.az;
+                    lockedInnerDeg = limits.inner;
+                    lockedInnerFeasible = limits.autoFeasible;
+                }
+                // 天顶附近不再让瞬时atan2方位直接驱动A轴；使用接管时锁定的IMM预计出圈方位。
+                const liveTargetAz = aGroup.rotation.y + wrapAngle(Math.atan2(targetVec.x, targetVec.z) - aGroup.rotation.y);
+                const targetA = handoverPhase === 'REACQUIRE' ? liveTargetAz
+                    : autoPrediction
+                        ? (lockedImmExitAz === null ? aGroup.rotation.y : lockedImmExitAz)
+                        : (lastCommandAz === null ? aGroup.rotation.y : lastCommandAz);
+                const targetE = handoverPhase === 'REACQUIRE' ? THREE.MathUtils.degToRad(zenithDeg)
+                                                              : THREE.MathUtils.degToRad(limits.singular);
+                setLimitedGimbal(targetA, targetE);
+
+                if (handoverPhase === 'SHOULDER') {
+                    // 必须先到达锁定内圈内部，再从内向外穿越；不可行情形则只允许天顶反转后最早触发。
+                    const predictionReady = !autoPrediction || lockedImmExitAz !== null;
+                    if (predictionReady) {
+                        if (lockedInnerFeasible && zenithDeg < lockedInnerDeg - 0.05) secondBoundaryArmed = true;
+                        if (!lockedInnerFeasible && leavingTrendFrames >= 3) secondBoundaryArmed = true;
+                        const crossedInnerOutward = lockedInnerFeasible && secondBoundaryArmed && lastZenithDeg !== null &&
+                                                    lastZenithDeg < lockedInnerDeg && zenithDeg >= lockedInnerDeg && leavingTrendFrames >= 3;
+                        const earliestAfterApex = !lockedInnerFeasible && secondBoundaryArmed && leavingTrendFrames >= 3;
+                        if ((crossedInnerOutward || earliestAfterApex) && boundaryDistanceShrinking && outward) {
+                            maybeTransmit(obs, nowMs, true); setPhase('PREP_MAIN'); secondBoundaryArmed = false;
+                        }
+                    }
+                }
+                if (handoverPhase === 'PREP_MAIN' && outward && zenithDeg >= limits.singular) setPhase('REACQUIRE');
+                if (handoverPhase === 'REACQUIRE') {
+                    const desiredA = Math.atan2(targetVec.x, targetVec.z);
+                    const errA = Math.abs(wrapAngle(desiredA - aGroup.rotation.y));
+                    const errE = Math.abs(THREE.MathUtils.degToRad(zenithDeg) - eGroup.rotation.x);
+                    if (errA < THREE.MathUtils.degToRad(2) && errE < THREE.MathUtils.degToRad(2)) {
+                        setPhase('NORMAL');
+                        document.getElementById('transferStatus').innerText = `#${transferSeq} 主机重捕获 / 肩机释放`;
+                        lockedImmExitAz = null; lockedInnerDeg = null; lockedInnerFeasible = true;
+                        immExitPrediction = null; immExitMarker.visible = false;
+                    }
+                }
+            }
+            lastSingularBoundaryDistance = boundaryDistance;
+            lastZenithDeg = zenithDeg;
+        }
+        // =====================================================================
+
+        function updateAngles() {
+            // AER: A(Y), E(X), R(Y)
+            aGroup.rotation.y = THREE.MathUtils.degToRad(document.getElementById('sliderA').value);
+            eGroup.rotation.x = THREE.MathUtils.degToRad(document.getElementById('sliderE').value);
+            rGroup.rotation.y = THREE.MathUtils.degToRad(document.getElementById('sliderR').value);
+
+            // [2026-07-17 修改v5] 滑块内部值提至0.001°精度, 面板显示仍保留1位小数防溢出
+            document.getElementById('valA').innerText = parseFloat(document.getElementById('sliderA').value).toFixed(1) + '°';
+            document.getElementById('valR').innerText = parseFloat(document.getElementById('sliderR').value).toFixed(1) + '°';
+            document.getElementById('valE').innerText = parseFloat(document.getElementById('sliderE').value).toFixed(1) + '°';
+        }
+
+        ['sliderA','sliderR','sliderE'].forEach(id => document.getElementById(id).addEventListener('input', updateAngles));
+        document.getElementById('rangeX').addEventListener('input', () => {
+            const x = parseInt(document.getElementById('rangeX').value);
+            const rSlider = document.getElementById('sliderR');
+            rSlider.min = -90 - x;
+            rSlider.max = -90 + x;
+            rSlider.value = -90;
+            document.getElementById('valR').innerText = '-90.0°';
+            rGroup.rotation.x = THREE.MathUtils.degToRad(-90);
+        });
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // ================= 核心 IK 计算 (双轴A/E；R仅作像面旋转) =================
+        // AER: A(Y)和E(X)负责指向, R(Y)负责像面旋转(不影响LOS)。
+        // LOS = R_y(A) @ R_x(E) @ (0,1,0) = 颈轴线方向
+        function solveIKForDrone(targetPos) {
+            const S = new THREE.Vector3(0, 8.1, 0), OFF = 1.6;
+            const A0 = aGroup.rotation.y, R0 = rGroup.rotation.y, E0 = eGroup.rotation.x;
+            const u0 = new THREE.Vector3(0, 1, 0).applyMatrix4(
+                new THREE.Matrix4().makeRotationY(A0).multiply(new THREE.Matrix4().makeRotationX(E0)));
+            const origin = S.clone().addScaledVector(u0, OFF);
+            const d = new THREE.Vector3().subVectors(targetPos, origin);
+            const r = d.length(); const td = d.normalize();
+            const tx = td.x, ty = td.y, tz = td.z;
+
+            // LOS = R_y(A)@R_x(E)@(0,1,0) = (sinA·sinE, cosE, cosA·sinE)
+            // R绕颈轴(Y)旋转不改变LOS方向
+            const ty_c = Math.max(-1, Math.min(1, ty));
+            let E_rad = Math.acos(ty_c);
+            const sinE = Math.sin(E_rad);
+            let A_rad, R_rad;
+            if (sinE < 1e-6) { A_rad = A0; }
+            else { A_rad = Math.atan2(tx/sinE, tz/sinE); }
+            R_rad = R0; // R不影响指向
+
+            setLimitedGimbal(A_rad, E_rad);
+        }
+        // ================================================
+
+        const raycaster = new THREE.Raycaster();
+        let frequencyWindowStart = performance.now(), renderFramesInWindow = 0, logicUpdatesInWindow = 0;
+
+        function updateFrequencyMonitor(realNowMs) {
+            renderFramesInWindow++; logicUpdatesInWindow++;
+            const elapsed = realNowMs - frequencyWindowStart;
+            if (elapsed >= 500) {
+                document.getElementById('renderFps').innerText = (renderFramesInWindow * 1000 / elapsed).toFixed(1) + ' FPS';
+                document.getElementById('logicHz').innerText = (logicUpdatesInWindow * 1000 / elapsed).toFixed(1) + ' Hz';
+                frequencyWindowStart = realNowMs; renderFramesInWindow = 0; logicUpdatesInWindow = 0;
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+
+            const realNowMs = performance.now();
+            const realDeltaMs = Math.max(1, Math.min(100, realNowMs - lastRealFrameMs));
+            lastRealFrameMs = realNowMs;
+            const baseSpeed = Math.max(0.05, parseFloat(document.getElementById('demoSpeed').value) || 1);
+            const slowFactor = Math.max(1, parseFloat(document.getElementById('overheadSlowFactor').value) || 1);
+            const autoSlow = document.getElementById('autoSlowEnabled').checked && overheadSlowActive;
+            const effectiveMultiplier = baseSpeed / (autoSlow ? slowFactor : 1);
+            const simDeltaMs = realDeltaMs * effectiveMultiplier;
+            simNowMs += simDeltaMs;
+            simTrajectoryTime += simDeltaMs * 0.0004;
+            controlDt = Math.max(0.0001, simDeltaMs / 1000);
+            document.getElementById('effectiveSpeed').innerText = effectiveMultiplier.toFixed(2) + '×' + (autoSlow ? '（过顶慢放）' : '');
+            updateFrequencyMonitor(realNowMs);
+
+            // 1. 更新无人机飞行状态
+            const currentPos = getDronePosition(simTrajectoryTime);
+            const frameNowMs = simNowMs;
+            droneGroup.position.copy(currentPos);
+            droneGroup.lookAt(getDronePosition(simTrajectoryTime + 0.01));
+            rotors.forEach(r => r.rotation.y += 30 * controlDt);
+
+            // 2. 更新10米渐渐消散尾迹
+            trailHistory.unshift(currentPos.clone());
+            let currentDist = 0;
+            let validPointsCount = 1;
+            
+            positionsArr[0] = trailHistory[0].x;
+            positionsArr[1] = trailHistory[0].y;
+            positionsArr[2] = trailHistory[0].z;
+            alphasArr[0] = 1.0;
+
+            for (let i = 1; i < trailHistory.length; i++) {
+                const distStep = trailHistory[i].distanceTo(trailHistory[i-1]);
+                currentDist += distStep;
+                
+                if (currentDist > TRAIL_MAX_DIST || i >= TRAIL_MAX_POINTS - 1) {
+                    trailHistory.length = i; // 修剪超出10米的历史记录数组
+                    break;
+                }
+                
+                positionsArr[i*3] = trailHistory[i].x;
+                positionsArr[i*3+1] = trailHistory[i].y;
+                positionsArr[i*3+2] = trailHistory[i].z;
+                
+                // 计算衰减透明度：距离0米处alpha=1.0，距离10米处alpha=0.0
+                alphasArr[i] = Math.max(0, 1.0 - (currentDist / TRAIL_MAX_DIST));
+                validPointsCount++;
+            }
+            
+            trailGeom.setDrawRange(0, validPointsCount);
+            posAttr.needsUpdate = true;
+            alphaAttr.needsUpdate = true;
+
+            // [2026-07-17 新增] 2.5 雷达量测(20Hz) → KF-CV / IMM 并行滤波与误差统计
+            const nowMs = simNowMs;
+            if (nowMs - lastMeasMs >= MEAS_DT * 1000) {
+                lastMeasMs = nowMs;
+                const z = [currentPos.x + MEAS_SIGMA * gaussRand(),
+                           currentPos.y + MEAS_SIGMA * gaussRand(),
+                           currentPos.z + MEAS_SIGMA * gaussRand()];
+                measMarker.position.set(z[0], z[1], z[2]);
+                measMarker.visible = true;
+
+                if (!fltInit) {
+                    for (let ax = 0; ax < 3; ax++) {
+                        kfcv[ax].setState([z[ax], 0], [[MEAS_R, 0], [0, 1e4]]);
+                    }
+                    const x0 = [z[0], 0, 0, z[1], 0, 0, z[2], 0, 0];
+                    const P0 = diag9([MEAS_R, 1e4, 2500, MEAS_R, 1e4, 2500, MEAS_R, 1e4, 2500]);
+                    for (let j = 0; j < 3; j++) imm[j].setState(x0, P0);
+                    fltInit = true;
+                } else {
+                    for (let ax = 0; ax < 3; ax++) { kfcv[ax].predict(MEAS_DT); kfcv[ax].update(z[ax]); }
+                    immStep(z, MEAS_DT);
+                }
+
+                // 滤波误差 (估计位置 vs 真值), 指数滑动平均
+                const fused = immFused();
+                const kfE = Math.hypot(kfcv[0].x[0] - currentPos.x, kfcv[1].x[0] - currentPos.y, kfcv[2].x[0] - currentPos.z);
+                const imE = Math.hypot(fused[0][0] - currentPos.x, fused[1][0] - currentPos.y, fused[2][0] - currentPos.z);
+                kfErrEma = kfErrEma === null ? kfE : 0.95 * kfErrEma + 0.05 * kfE;
+                immErrEma = immErrEma === null ? imE : 0.95 * immErrEma + 0.05 * imE;
+                document.getElementById('kfErr').innerText = kfErrEma.toFixed(2) + " m";
+                document.getElementById('immErr').innerText = immErrEma.toFixed(2) + " m";
+                document.getElementById('immMu').innerText = immMu.map(v => (v * 100).toFixed(0) + "%").join(' / ');
+            }
+
+            // [2026-07-18 升级] 每帧刷新1s外推: KF-CV直线; IMM按μ加权 CV直线/CS抛物线/CT圆弧
+            if (fltInit) {
+                const kp = [], ip = [];
+                for (let k = 0; k <= PRED_PTS; k++) {
+                    const tau = k / PRED_PTS * PRED_HORIZON;
+                    kp.push(new THREE.Vector3(
+                        kfcv[0].x[0] + kfcv[0].x[1] * tau,
+                        kfcv[1].x[0] + kfcv[1].x[1] * tau,
+                        kfcv[2].x[0] + kfcv[2].x[1] * tau));
+                    ip.push(immExtrapolate(tau));
+                }
+                kfPredLine.geometry.setFromPoints(kp);
+                immPredLine.geometry.setFromPoints(ip);
+            }
+
+
+            // 3. 主/肩相机交接控制。运动统计放在控制之后，保留上一帧时间供求导。
+            updateHandover(currentPos, frameNowMs);
+            updateKinematics(currentPos, frameNowMs);
+            updateTrackingViews(currentPos);
+
+            const origin = new THREE.Vector3();
+            lineOfSight.getWorldPosition(origin);
+            const A_l = aGroup.rotation.y, E_l = eGroup.rotation.x, R_l = rGroup.rotation.y;
+            const dM = new THREE.Matrix4().makeRotationY(A_l).multiply(
+                new THREE.Matrix4().makeRotationX(E_l)).multiply(new THREE.Matrix4().makeRotationY(R_l));
+            const direction = new THREE.Vector3(0, 1, 0).applyMatrix4(dM).normalize();
+            
+            hitMarker.visible = false;
+
+            if (autoTrack) {
+                const r = currentPos.length();
+                const az = Math.atan2(currentPos.x, currentPos.z) * (180 / Math.PI);
+                const el = Math.asin(currentPos.y / r) * (180 / Math.PI);
+
+                document.getElementById('distOut').innerText = r.toFixed(2) + " m";
+                document.getElementById('azOut').innerText = az.toFixed(2) + '°';
+                document.getElementById('elOut').innerText = el.toFixed(2) + '°';
+
+                // 追踪误差: LOS方向 vs 目标方向的夹角 (mrad)
+                const Al = aGroup.rotation.y, El = eGroup.rotation.x, Rl = rGroup.rotation.y;
+                const lM = new THREE.Matrix4().makeRotationY(Al).multiply(
+                    new THREE.Matrix4().makeRotationX(El)).multiply(new THREE.Matrix4().makeRotationY(Rl));
+                const losDir = new THREE.Vector3(0, 1, 0).applyMatrix4(lM).normalize();
+                const targetDir = currentPos.clone().sub(origin).normalize();
+                const trackErrMrad = Math.acos(Math.max(-1, Math.min(1, losDir.dot(targetDir)))) * 1000;
+                document.getElementById('trackErr').innerText = trackErrMrad.toFixed(2) + ' mrad';
+
+                // 红线始终表示电机实际视线，不再直接伪装成目标连线。
+                raycaster.set(origin, direction);
+                const actualHits = raycaster.intersectObject(targetSphere);
+                const actualEnd = actualHits.length ? actualHits[0].point : origin.clone().addScaledVector(direction, 100);
+                const endLocal = lineOfSight.worldToLocal(actualEnd.clone());
+                lineOfSight.geometry.setFromPoints([new THREE.Vector3(0,0,0), endLocal]);
+                hitMarker.position.copy(actualEnd); hitMarker.visible = true;
+            } else {
+                raycaster.set(origin, direction);
+                const intersects = raycaster.intersectObject(targetSphere);
+                
+                if (intersects.length > 0) {
+                    const hitPoint = intersects[0].point;
+                    hitMarker.position.copy(hitPoint);
+                    hitMarker.visible = true;
+                    
+                    const endLocal = lineOfSight.worldToLocal(hitPoint.clone());
+                    lineOfSight.geometry.setFromPoints([new THREE.Vector3(0,0,0), endLocal]);
+
+                    const r = hitPoint.length();
+                    const az = Math.atan2(hitPoint.x, hitPoint.z) * (180 / Math.PI);
+                    const el = Math.asin(hitPoint.y / r) * (180 / Math.PI);
+
+                    document.getElementById('distOut').innerText = r.toFixed(2) + " m";
+                    document.getElementById('azOut').innerText = az.toFixed(2) + '°';
+                    document.getElementById('elOut').innerText = el.toFixed(2) + '°';
+                } else {
+                    lineOfSight.geometry.setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,-100)]);
+                    document.getElementById('distOut').innerText = "--";
+                }
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        updateAngles();
+        syncAutoInnerUI();
+        updateTrackingViewScale();
+        document.getElementById('demoSpeedValue').innerText = (parseFloat(document.getElementById('demoSpeed').value) || 1).toFixed(2) + '×';
+        updateShoulderModel();
+        resetHandover('未启用');
+        animate();
+    </script>
+</body>
+</html>
