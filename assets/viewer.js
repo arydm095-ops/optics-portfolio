@@ -1,7 +1,7 @@
 const works = {
   prism: {
     title: '三楔镜折射扫描仿真', category: '01 / REFRACTION & SCANNING',
-    src: 'demos/risleyPrismSimulator_standalone.html',
+    src: 'demos/risleyPrismSimulator_standalone.html?v=2',
     description: '基于逐面 Snell 折射计算光线传播，比较楔角、转速、相位与轴心位置变化对扫描轨迹的影响。二维轨迹、光路几何与三维视图在同一界面中显示。',
     focus: '观察重点：折射追迹 / 扫描覆盖 / 参数对比',
     steps: ['先查看默认参数下的扫描轨迹。', '修改楔角、转速比或相位，点击“运行仿真”比较变化。', '点击“动画预览”观察光线运动，也可导出 CSV。'], height: 930

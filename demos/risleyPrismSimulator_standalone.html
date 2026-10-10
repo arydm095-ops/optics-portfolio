@@ -191,15 +191,20 @@
     }
 
     .plot, .wide-plot, .detail-plot {
-      min-height: 0;
+      min-width: 0;
+      min-height: 240px;
       border: 1px solid var(--line);
       background: #fff;
       position: relative;
+      overflow: hidden;
     }
 
     .wide-plot { grid-column: 1 / -1; }
 
     canvas {
+      /* Keep bitmap resolution changes out of the grid's intrinsic sizing. */
+      position: absolute;
+      inset: 0;
       display: block;
       width: 100%;
       height: 100%;
@@ -207,7 +212,10 @@
 
     @media (max-width: 1050px) {
       .app { grid-template-columns: 1fr; }
-      main { min-height: 1320px; }
+      main {
+        min-height: 1320px;
+        grid-template-rows: minmax(320px, 1.05fr) minmax(740px, 1fr);
+      }
       .plot-grid, .bottom-grid { grid-template-columns: 1fr; }
       .wide-plot { grid-column: auto; }
     }
@@ -761,10 +769,11 @@
     }
 
     function setupCanvas(canvas) {
-      const rect = canvas.getBoundingClientRect();
+      // Measure the stable plot container, not the resizable bitmap itself.
+      const plot = canvas.parentElement;
       const dpr = window.devicePixelRatio || 1;
-      const w = Math.max(320, Math.floor(rect.width));
-      const h = Math.max(240, Math.floor(rect.height));
+      const w = Math.max(1, plot.clientWidth);
+      const h = Math.max(1, plot.clientHeight);
       if (canvas.width !== Math.floor(w * dpr) || canvas.height !== Math.floor(h * dpr)) {
         canvas.width = Math.floor(w * dpr);
         canvas.height = Math.floor(h * dpr);
