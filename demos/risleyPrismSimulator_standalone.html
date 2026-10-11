@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>三楔镜折射扫描仿真</title>
+  <title>三楔镜扫描光路分析</title>
   <style>
     :root {
       --bg: #f5f6f8;
@@ -220,12 +220,12 @@
       .wide-plot { grid-column: auto; }
     }
   </style>
-<link rel="stylesheet" href="../assets/portfolio-theme.css?v=20261011b">
+<link rel="stylesheet" href="../assets/portfolio-theme.css?v=20261012a">
 </head>
 <body class="prism-demo">
   <div class="app">
     <aside>
-      <h1>三楔镜折射扫描仿真</h1>
+      <h1>三楔镜扫描光路分析</h1>
 
       <fieldset>
         <legend>光线/荧幕</legend>
@@ -1615,6 +1615,7 @@
     }
 
     function runSimulation() {
+      clearTimeout(parameterUpdateTimer);
       animationToken++;
       try {
         els.status.textContent = "正在计算三楔镜折射轨迹...";
@@ -1765,10 +1766,16 @@
     els.useSpeedRatio.addEventListener("change", updateParamModeUI);
     els.enableThirdPrism.addEventListener("change", updateParamModeUI);
     els.speedUnit.addEventListener("change", handleSpeedUnitChange);
+    let parameterUpdateTimer;
+    document.querySelector("aside").addEventListener("input", event => {
+      if (event.target.id === "animationSpeed") return;
+      clearTimeout(parameterUpdateTimer);
+      parameterUpdateTimer = setTimeout(runSimulation, 650);
+    });
     window.addEventListener("resize", () => drawAll());
 
     handleSpeedUnitChange();
     runSimulation();
   </script>
-<script src="../assets/workbench-ui.js?v=20261011b"></script></body>
+<script src="../assets/workbench-ui.js?v=20261012a"></script></body>
 </html>

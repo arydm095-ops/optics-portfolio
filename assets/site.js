@@ -4,7 +4,7 @@ document.querySelectorAll('[data-copy-link]').forEach(button => {
     const toast = document.querySelector('.toast');
     try {
       await navigator.clipboard.writeText(url);
-      toast.textContent = '链接已复制，可直接发送给招聘方';
+      toast.textContent = '链接已复制';
     } catch {
       toast.textContent = '请复制浏览器地址栏中的链接';
     }
