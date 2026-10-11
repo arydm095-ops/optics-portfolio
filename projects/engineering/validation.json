@@ -1,0 +1,471 @@
+{
+  "schema": "engineering-validation/v1",
+  "generatedAt": "2026-10-11T14:32:49.386Z",
+  "passed": 32,
+  "total": 32,
+  "tests": [
+    {
+      "name": "N-BK7 d 线折射率 / SCHOTT",
+      "actual": 1.5167984379050088,
+      "expected": 1.5168,
+      "error": 0.0000015620949911365756,
+      "tolerance": 0.00001,
+      "unit": "",
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "N-SF5 d 线折射率 / SCHOTT",
+      "actual": 1.6727030184452947,
+      "expected": 1.67271,
+      "error": 0.000006981554705243198,
+      "tolerance": 0.00001,
+      "unit": "",
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "平面折射 / Snell 角度",
+      "actual": 0.4428597386197666,
+      "expected": 0.44285973861976646,
+      "error": 1.1102230246251565e-16,
+      "tolerance": 1e-12,
+      "unit": "rad",
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "折射光路可逆性",
+      "actual": -0.6427876096865391,
+      "expected": -0.6427876096865393,
+      "error": 1.1102230246251565e-16,
+      "tolerance": 1e-12,
+      "unit": "",
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "全反射判据",
+      "actual": 1,
+      "expected": 1,
+      "error": 0,
+      "tolerance": 0,
+      "unit": "",
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "精确追迹近轴极限 / 矩阵焦点",
+      "actual": 105.82032760322329,
+      "expected": 105.82032759702993,
+      "error": 6.193360491124622e-9,
+      "tolerance": 0.0001,
+      "unit": "mm",
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "轴上成像中心反演对称性 X",
+      "actual": 0,
+      "expected": 0,
+      "error": 0,
+      "tolerance": 1e-12,
+      "unit": "mm",
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "轴上成像中心反演对称性 Y",
+      "actual": 0,
+      "expected": 0,
+      "error": 0,
+      "tolerance": 1e-12,
+      "unit": "mm",
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "301 光线/视场/波长独立复核：优化降低 RMS",
+      "actual": 1,
+      "expected": 1,
+      "error": 0,
+      "tolerance": 0,
+      "unit": "",
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "优化保持目标焦距 ±0.2%",
+      "actual": 1,
+      "expected": 1,
+      "error": 0,
+      "tolerance": 0,
+      "unit": "",
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "镜组光线通过率",
+      "actual": 1,
+      "expected": 1,
+      "error": 0,
+      "tolerance": 0,
+      "unit": "",
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "几何 MTF 零频归一化",
+      "actual": 1,
+      "expected": 1,
+      "error": 0,
+      "tolerance": 1e-12,
+      "unit": "",
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "几何 MTF 幅值边界",
+      "actual": 1,
+      "expected": 1,
+      "error": 0,
+      "tolerance": 0,
+      "unit": "",
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "固定随机种子完全复现样本",
+      "actual": 1,
+      "expected": 1,
+      "error": 0,
+      "tolerance": 0,
+      "unit": "",
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "逐样本调焦补偿不恶化 RMS",
+      "actual": 1,
+      "expected": 1,
+      "error": 0,
+      "tolerance": 0,
+      "unit": "",
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "零公差恢复标称像质",
+      "actual": 0,
+      "expected": 0,
+      "error": 0,
+      "tolerance": 1e-10,
+      "unit": "µm",
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "端力悬臂挠度 / 解析解",
+      "actual": 0.000043972088030069845,
+      "expected": 0.00004397208803005905,
+      "error": 2.4548727075297604e-13,
+      "tolerance": 1e-8,
+      "unit": "m",
+      "relative": true,
+      "pass": true
+    },
+    {
+      "name": "端力悬臂转角 / 解析解",
+      "actual": 0.0008244766505639371,
+      "expected": 0.000824476650563607,
+      "error": 4.004231791114458e-13,
+      "tolerance": 1e-8,
+      "unit": "rad",
+      "relative": true,
+      "pass": true
+    },
+    {
+      "name": "根部弯曲应力 / 解析解",
+      "actual": 2133333.3333317605,
+      "expected": 2133333.333333333,
+      "error": 7.37127265892923e-13,
+      "tolerance": 1e-8,
+      "unit": "Pa",
+      "relative": true,
+      "pass": true
+    },
+    {
+      "name": "整体竖向力平衡",
+      "actual": 1.4921397450962104e-12,
+      "expected": 0,
+      "error": 1.4921397450962104e-12,
+      "tolerance": 1e-8,
+      "unit": "N",
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "自由温差弯曲挠度",
+      "actual": 0.00004906666666668652,
+      "expected": 0.00004906666666666667,
+      "error": 4.045042667132357e-13,
+      "tolerance": 1e-8,
+      "unit": "m",
+      "relative": true,
+      "pass": true
+    },
+    {
+      "name": "自由温差弯曲转角",
+      "actual": 0.0012266666666671537,
+      "expected": 0.0012266666666666667,
+      "error": 3.9703012164170265e-13,
+      "tolerance": 1e-8,
+      "unit": "rad",
+      "relative": true,
+      "pass": true
+    },
+    {
+      "name": "无约束热弯曲无残余应力",
+      "actual": 0.000001521634380996506,
+      "expected": 0,
+      "error": 0.000001521634380996506,
+      "tolerance": 0.02,
+      "unit": "Pa",
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "均布重力载荷挠度",
+      "actual": 0.0000026205495652178203,
+      "expected": 0.0000026205495652173913,
+      "error": 1.637145862374532e-13,
+      "tolerance": 1e-8,
+      "unit": "m",
+      "relative": true,
+      "pass": true
+    },
+    {
+      "name": "反射光束角变化 / 二倍转角",
+      "actual": 0.0016489533011278742,
+      "expected": 0.0016489533011278742,
+      "error": 0,
+      "tolerance": 1e-15,
+      "unit": "rad",
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "零外载位移",
+      "actual": 0,
+      "expected": 0,
+      "error": 0,
+      "tolerance": 1e-15,
+      "unit": "m",
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "第 1 阶悬臂模态 / 解析解",
+      "actual": 382.79320121500666,
+      "expected": 382.79319180417906,
+      "error": 2.4584626380856696e-8,
+      "tolerance": 0.0001,
+      "unit": "Hz",
+      "relative": true,
+      "pass": true
+    },
+    {
+      "name": "第 2 阶悬臂模态 / 解析解",
+      "actual": 2398.926414080032,
+      "expected": 2398.9239840301025,
+      "error": 0.0000010129749611163893,
+      "tolerance": 0.0001,
+      "unit": "Hz",
+      "relative": true,
+      "pass": true
+    },
+    {
+      "name": "第 3 阶悬臂模态 / 解析解",
+      "actual": 6717.109793401796,
+      "expected": 6717.056618717085,
+      "error": 0.000007916366904332408,
+      "tolerance": 0.0001,
+      "unit": "Hz",
+      "relative": true,
+      "pass": true
+    },
+    {
+      "name": "一阶模态网格收敛",
+      "actual": 1,
+      "expected": 1,
+      "error": 0,
+      "tolerance": 0,
+      "unit": "",
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "厚度选型满足全部约束",
+      "actual": 1,
+      "expected": 1,
+      "error": 0,
+      "tolerance": 0,
+      "unit": "",
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "厚度选型为离散扫描中最轻可行方案",
+      "actual": 1,
+      "expected": 1,
+      "error": 0,
+      "tolerance": 0,
+      "unit": "",
+      "relative": false,
+      "pass": true
+    }
+  ],
+  "convergence": [
+    {
+      "elements": 2,
+      "frequencies": [
+        382.97824833287723,
+        2419.2810585142142,
+        8182.450164116779
+      ],
+      "errors": [
+        0.04834373564115955,
+        0.8485918945173344,
+        21.81600704862861
+      ]
+    },
+    {
+      "elements": 4,
+      "frequencies": [
+        382.8057122327455,
+        2401.719226989421,
+        6769.062061044942
+      ],
+      "errors": [
+        0.0032708075364270787,
+        0.11652069752633121,
+        0.7742296258593956
+      ]
+    },
+    {
+      "elements": 8,
+      "frequencies": [
+        382.7939891665248,
+        2399.115799348377,
+        6721.142208278798
+      ],
+      "errors": [
+        0.0002083010781821627,
+        0.007995889805244199,
+        0.06082410486652544
+      ]
+    },
+    {
+      "elements": 16,
+      "frequencies": [
+        382.79324177884024,
+        2398.9362373806616,
+        6717.323647087609
+      ],
+      "errors": [
+        0.000013055263847640589,
+        0.0005107852787633538,
+        0.003975377694148485
+      ]
+    },
+    {
+      "elements": 24,
+      "frequencies": [
+        382.79320121500666,
+        2398.926414080032,
+        6717.109793401796
+      ],
+      "errors": [
+        0.00000245846263808567,
+        0.00010129749611163894,
+        0.0007916366904332409
+      ]
+    }
+  ],
+  "analyticFrequencies": [
+    382.79319180417906,
+    2398.9239840301025,
+    6717.056618717085
+  ],
+  "optics": {
+    "initial": {
+      "rmsUm": 10.101418209782782,
+      "efl": 102.2086683518822
+    },
+    "optimized": {
+      "rmsUm": 5.986434881564656,
+      "efl": 100.00410830830573,
+      "params": {
+        "r1": 62.269829875724376,
+        "r2": -43.12049580704366,
+        "r3": -124.0736428293412,
+        "t1": 6,
+        "t2": 3,
+        "diameter": 18,
+        "pupil": 10,
+        "field": 3,
+        "target": 100,
+        "imageZ": 104.73292078903752,
+        "dx": 0,
+        "dy": 0,
+        "tilt": 0,
+        "dn1": 0,
+        "dn2": 0,
+        "rays": 121
+      }
+    },
+    "improvement": 0.40736689074341503
+  },
+  "tolerance": {
+    "samples": 120,
+    "seed": 20261011,
+    "fixed": {
+      "median": 6.119545361012706,
+      "p95": 7.387445213016556,
+      "max": 9.35308303217315,
+      "pass": 120,
+      "yield": 1,
+      "ci": [
+        0.9689797289440706,
+        1
+      ]
+    },
+    "compensated": {
+      "median": 5.870003521129132,
+      "p95": 5.956735745410779,
+      "max": 5.967106957497734,
+      "pass": 120,
+      "yield": 1,
+      "ci": [
+        0.9689797289440706,
+        1
+      ]
+    },
+    "invalid": 0
+  },
+  "cae": {
+    "baseline": {
+      "pointingArcsec": 292.7625592518221,
+      "frequencyHz": 154.58939051191598,
+      "tipUm": 36.91391725175393
+    },
+    "best": {
+      "height": 4.75,
+      "mass": 45.65,
+      "pointing": 90.81269992377064,
+      "frequency": 294.56666328030053,
+      "safety": 343.132371477054,
+      "pass": true
+    }
+  }
+}

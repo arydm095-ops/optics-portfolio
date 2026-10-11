@@ -1,0 +1,2 @@
+importScripts('engine.js');
+self.onmessage=event=>{const{id,type,params,options}=event.data;try{let result;switch(type){case'optics':result=Engineering.evaluate(params,options.auto);break;case'optimize':result=Engineering.optimize(params,110);break;case'tolerance':result=Engineering.tolerance(params,options);break;case'cae':result=Engineering.beam(params);break;case'sweep':result=Engineering.designSweep(params);break;default:throw Error('未知计算任务');}self.postMessage({id,type,result});}catch(error){self.postMessage({id,type,error:error.message});}};

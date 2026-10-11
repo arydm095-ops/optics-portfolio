@@ -3,19 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>张杨阳 · 光学仿真作品</title>
-  <meta name="description" content="交互式光学仿真作品，支持在浏览器中查看扫描轨迹、光路指向误差与运动跟踪结果，并调整模型参数。">
+  <title>张杨阳 · 光学与光机仿真作品</title>
+  <meta name="description" content="成像镜组设计、公差与装调补偿、光机结构有限元分析，以及扫描光路与指向误差仿真。">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/site.css">
 </head>
 <body>
   <main>
     <header class="page-header">
-      <div><h1>张杨阳 · 光学仿真作品</h1><p>交互式光学仿真作品，可在浏览器中查看结果并调整参数。</p></div>
+      <div><h1>张杨阳 · 光学与光机仿真作品</h1><p>光学系统建模、设计优化与光机稳定性分析，可调整参数并复现计算。</p></div>
       <button class="copy-link" data-copy-link>复制作品集链接</button>
     </header>
     <p class="note">无需下载或登录。仿真界面参数较多，建议使用电脑浏览。</p>
     <section class="works" aria-label="仿真作品">
+      <article class="work">
+        <h2>可见光胶合镜组设计与装调公差验证</h2>
+        <p>面向 100 mm 焦距、多波长与多视场成像，完成精确光线追迹、镜组优化及制造公差评价。</p>
+        <ul><li>查看点列图、几何 MTF、色差与调焦曲线，优化曲率并比较前后像质。</li><li>Monte Carlo 公差、敏感性排序与调焦补偿，导出样本、参数和分析报告。</li></ul>
+        <a class="open-link" href="projects/engineering/?project=optics">打开光学设计工作台 →</a>
+      </article>
+      <article class="work">
+        <h2>反射镜支撑结构热变形与指向稳定性分析</h2>
+        <p>建立等效梁有限元模型，将载荷、温差和振动响应传递到反射光束指向误差。</p>
+        <ul><li>静态挠度、弯曲应力、模态与谐波响应；解析解和网格收敛检查计算精度。</li><li>扫描厚度，在角偏差、频率和安全系数约束下筛选轻量方案。</li></ul>
+        <a class="open-link" href="projects/engineering/?project=cae">打开光机 CAE 工作台 →</a>
+      </article>
       <article class="work">
         <h2>三楔镜折射扫描仿真</h2>
         <p>基于逐面 Snell 折射计算光线传播，分析楔镜组合的扫描轨迹与覆盖形态。</p>
@@ -35,7 +47,7 @@
         <a class="open-link" href="viewer.html?project=are">打开演示 →</a>
       </article>
     </section>
-    <footer>以上作品为数值仿真与交互演示。</footer>
+    <footer>数值仿真与交互演示。工程工作台提供计算方法、验证记录和可导出结果。</footer>
   </main>
   <div class="toast" role="status" aria-live="polite"></div>
   <script src="assets/site.js"></script>

@@ -1,0 +1,82 @@
+(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.Engineering=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
+'use strict';
+const PI=Math.PI,rad=PI/180,sq=x=>x*x,clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const glasses={
+ 'N-BK7':{B:[1.03961212,.231792344,1.01046945],C:[.00600069867,.0200179144,103.560653]},
+ 'N-SF5':{B:[1.52481889,.187085527,1.42729015],C:[.011254756,.0588995392,129.141675]}
+};
+function index(glass,nm){if(glass==='AIR')return 1;const g=glasses[glass];if(!g)throw Error('未知玻璃材料');const l=sq(nm/1000);return Math.sqrt(1+g.B.reduce((s,b,i)=>s+b*l/(l-g.C[i]),0));}
+const dot=(a,b)=>a.reduce((s,x,i)=>s+x*b[i],0),add=(a,b)=>a.map((x,i)=>x+b[i]),scale=(a,k)=>a.map(x=>x*k),norm=a=>Math.sqrt(dot(a,a)),unit=a=>scale(a,1/norm(a));
+function refract(d,n,n1,n2){n=dot(d,n)>0?scale(n,-1):n;const c=-dot(d,n),eta=n1/n2,k=1-eta*eta*(1-c*c);if(k<0)return null;return unit(add(scale(d,eta),scale(n,eta*c-Math.sqrt(k))));}
+function rotate(v,a){const c=Math.cos(a),s=Math.sin(a);return[c*v[0]+s*v[2],v[1],-s*v[0]+c*v[2]];}
+const opticalDefaults={r1:50,r2:-40,r3:-200,t1:6,t2:3,diameter:18,pupil:10,field:3,target:100,imageZ:110,dx:0,dy:0,tilt:0,dn1:0,dn2:0,rays:121};
+const toleranceDefaults={radius:.1,thickness:.02,decenter:.02,tilt:.04,index:.0001,focus:.05,compensation:.5,samples:120,seed:20261011,limit:12};
+function surfaces(p){return[{z:0,r:p.r1,from:'AIR',to:'N-BK7'},{z:p.t1,r:p.r2,from:'N-BK7',to:'N-SF5'},{z:p.t1+p.t2,r:p.r3,from:'N-SF5',to:'AIR'}];}
+function sag(r,y){return r-Math.sign(r)*Math.sqrt(r*r-y*y);}
+function validateOptics(p){for(const k of Object.keys(opticalDefaults)){if(!Number.isFinite(p[k]))throw Error('光学参数必须为有限数值');}
+ if(p.pupil<=0||p.diameter<=0||p.pupil>p.diameter||p.field<0||p.field>10||p.t1<=0||p.t2<=0||p.target<=0)throw Error('请检查口径、厚度、视场与目标焦距');
+ const a=p.diameter/2;if([p.r1,p.r2,p.r3].some(r=>Math.abs(r)<=a))throw Error('曲率半径必须大于镜片半口径');
+ if(p.t1+sag(p.r2,a)-sag(p.r1,a)<.3||p.t2+sag(p.r3,a)-sag(p.r2,a)<.3)throw Error('镜片边缘厚度小于 0.3 mm，当前结构不可行');
+ if(p.imageZ<=p.t1+p.t2)throw Error('像面必须位于镜组后方');
+}
+function trace(p,field,nm,pupilX,pupilY,keepPath=false){
+ const a=(p.tilt||0)*rad,off=[p.dx||0,p.dy||0,0];let point=rotate(add([pupilX,pupilY,-2],scale(off,-1)),-a),d=rotate([Math.sin(field*rad),0,Math.cos(field*rad)],-a),path=[];
+ if(keepPath)path.push(add(rotate(point,a),off));
+ for(const s of surfaces(p)){
+  const center=[0,0,s.z+s.r],v=add(point,scale(center,-1)),b=dot(v,d),disc=b*b-dot(v,v)+s.r*s.r;if(disc<0)return null;
+  const roots=[-b-Math.sqrt(disc),-b+Math.sqrt(disc)].filter(t=>t>1e-8);
+  if(!roots.length)return null;
+  const hits=roots.map(t=>add(point,scale(d,t))).sort((x,y)=>Math.abs(x[2]-s.z)-Math.abs(y[2]-s.z));
+  point=hits[0];if(Math.hypot(point[0],point[1])>p.diameter/2+1e-8)return null;
+  const n=unit(add(point,scale(center,-1))),getN=g=>index(g,nm)+(g==='N-BK7'?(p.dn1||0):g==='N-SF5'?(p.dn2||0):0);
+  d=refract(d,n,getN(s.from),getN(s.to));if(!d)return null;
+  if(keepPath)path.push(add(rotate(point,a),off));
+ }
+ point=add(rotate(point,a),off);d=rotate(d,a);if(d[2]<=0)return null;
+ return{a:point[0]-point[2]*d[0]/d[2],b:d[0]/d[2],c:point[1]-point[2]*d[1]/d[2],d:d[1]/d[2],nm,field,path};
+}
+function mul2(a,b){return[a[0]*b[0]+a[1]*b[2],a[0]*b[1]+a[1]*b[3],a[2]*b[0]+a[3]*b[2],a[2]*b[1]+a[3]*b[3]];}
+function paraxial(p,nm=587.6){let m=[1,0,0,1];const ss=surfaces(p);ss.forEach((s,i)=>{const n1=index(s.from,nm),n2=index(s.to,nm);m=mul2([1,0,-(n2-n1)/s.r,1],m);if(i<ss.length-1)m=mul2([1,(ss[i+1].z-s.z)/n2,0,1],m);});return{matrix:m,efl:-1/m[2],bfl:-m[0]/m[2],focus:p.t1+p.t2-m[0]/m[2]};}
+function pupilPoints(count){const pts=[[0,0]];for(let i=1;i<count;i++){const r=Math.sqrt((i-.5)/(count-1)),a=i*PI*(3-Math.sqrt(5));pts.push([r*Math.cos(a),r*Math.sin(a)]);}return pts;}
+function bundle(p,count=p.rays){const rays=[],fields=[0,p.field/2,p.field],pts=pupilPoints(count);let attempted=0;for(const f of fields)for(const nm of[486.1,587.6,656.3])for(const[x,y]of pts){attempted++;const r=trace(p,f,nm,x*p.pupil/2,y*p.pupil/2);if(r)rays.push(r);}return{rays,attempted,fields};}
+function bestFocus(bundle,lo,hi){let ab=0,bb=0;for(const f of bundle.fields){const rr=bundle.rays.filter(r=>r.field===f);if(!rr.length)continue;const mean=k=>rr.reduce((s,r)=>s+r[k],0)/rr.length,ma=mean('a'),mb=mean('b'),mc=mean('c'),md=mean('d');for(const r of rr){ab+=((r.a-ma)*(r.b-mb)+(r.c-mc)*(r.d-md))/rr.length;bb+=(sq(r.b-mb)+sq(r.d-md))/rr.length;}}return clamp(-ab/(bb||1e-30),lo,hi);}
+function quantile(values,q){if(!values.length)return NaN;const v=values.slice().sort((a,b)=>a-b),x=(v.length-1)*q,i=Math.floor(x);return v[i]+(v[Math.min(i+1,v.length-1)]-v[i])*(x-i);}
+function spot(rr,z){if(!rr.length)return{rms:Infinity,r80:Infinity,cx:0,cy:0,points:[]};const points=rr.map(r=>({x:r.a+r.b*z,y:r.c+r.d*z,nm:r.nm})),cx=points.reduce((s,r)=>s+r.x,0)/points.length,cy=points.reduce((s,r)=>s+r.y,0)/points.length,rs=points.map(p=>Math.hypot(p.x-cx,p.y-cy));return{rms:Math.sqrt(rs.reduce((s,r)=>s+r*r,0)/rs.length),r80:quantile(rs,.8),cx,cy,points};}
+function evaluate(p,auto=false,count=p.rays){validateOptics(p);const b=bundle(p,count);if(b.rays.length<b.attempted*.9)throw Error('光线通过率低于 90%，请减小视场/入瞳或检查结构');const z=auto?bestFocus(b,p.t1+p.t2+1,p.t1+p.t2+500):p.imageZ,par=paraxial(p),spots=b.fields.map(f=>({field:f,...spot(b.rays.filter(r=>r.field===f),z)})),rms=Math.sqrt(spots.reduce((s,r)=>s+r.rms*r.rms,0)/spots.length);return{params:{...p,imageZ:z},imageZ:z,efl:par.efl,bfl:par.bfl,fnumber:Math.abs(par.efl/p.pupil),rms,spots,throughput:b.rays.length/b.attempted,rayCount:b.attempted,chromatic:paraxial(p,486.1).focus-paraxial(p,656.3).focus,bundle:b,distortion:b.fields.map((f,i)=>f?100*(spots[i].cx-par.efl*Math.tan(f*rad))/(par.efl*Math.tan(f*rad)):0)};}
+function geometricMTF(points,axis,max=100,n=61){const center=points.reduce((s,p)=>s+p[axis],0)/points.length;return Array.from({length:n},(_,i)=>{const f=i*max/(n-1);let re=0,im=0;for(const p of points){const phase=2*PI*f*(p[axis]-center);re+=Math.cos(phase);im+=Math.sin(phase);}return[f,Math.hypot(re,im)/points.length];});}
+function merit(p){try{const r=evaluate(p,true,37);if(r.efl<=0)return 100;return sq(r.rms)+sq((r.efl-p.target)/p.target)*.3+sq(1-r.throughput);}catch{return 100;}}
+function optimize(p,iterations=100){const base=evaluate(p,true),bounds=[[18,180],[-180,-12],[-500,-15]],keys=['r1','r2','r3'],toP=x=>({...p,...Object.fromEntries(keys.map((k,i)=>[k,clamp(x[i],...bounds[i])]))}),x0=keys.map(k=>p[k]);let simplex=[x0,...x0.map((_,i)=>x0.map((x,j)=>j===i?x*1.05:x))].map(x=>({x,f:merit(toP(x))})),history=[];let evaluations=4;
+ const evalX=x=>{x=x.map((v,i)=>clamp(v,...bounds[i]));evaluations++;return{x,f:merit(toP(x))};};
+ for(let it=0;it<iterations;it++){simplex.sort((a,b)=>a.f-b.f);history.push({iteration:it,merit:simplex[0].f});const best=simplex[0],worst=simplex[3],cent=[0,1,2].map(j=>(simplex[0].x[j]+simplex[1].x[j]+simplex[2].x[j])/3),refl=evalX(cent.map((c,i)=>c+(c-worst.x[i])));if(refl.f<best.f){const ex=evalX(cent.map((c,i)=>c+2*(refl.x[i]-c)));simplex[3]=ex.f<refl.f?ex:refl;}else if(refl.f<simplex[2].f)simplex[3]=refl;else{const outside=refl.f<worst.f,co=evalX(cent.map((c,i)=>c+.5*((outside?refl:worst).x[i]-c)));if(co.f<(outside?refl.f:worst.f))simplex[3]=co;else simplex=simplex.map((s,i)=>i?evalX(s.x.map((x,j)=>(x+best.x[j])/2)):s);}}
+ simplex.sort((a,b)=>a.f-b.f);const result=evaluate(toP(simplex[0].x),true);return{before:base,after:result,history,evaluations,method:'Nelder–Mead，曲率边界约束 + 多色多视场 RMS + 焦距约束'};}
+function rng(seed){let x=seed>>>0;return()=>{x+=0x6D2B79F5;let t=x;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296;};}
+function applyErrors(p,t,u){const e={...p};['r1','r2','r3'].forEach((k,i)=>e[k]*=1+u[i]*t.radius/100);e.t1+=u[3]*t.thickness;e.t2+=u[4]*t.thickness;e.dx+=u[5]*t.decenter;e.dy+=u[6]*t.decenter;e.tilt+=u[7]*t.tilt;e.dn1+=u[8]*t.index;e.dn2+=u[9]*t.index;e.imageZ+=u[10]*t.focus;return e;}
+function wilson(k,n){const z=1.96,a=z*z/n,center=(k/n+a/2)/(1+a),h=z*Math.sqrt((k/n)*(1-k/n)/n+a/(4*n))/(1+a);return[center-h,center+h];}
+function tolerance(p,t){const random=rng(t.seed),rows=[];let passFixed=0,passComp=0,invalid=0;for(let i=0;i<t.samples;i++){const u=Array.from({length:11},()=>2*random()-1),trial=applyErrors(p,t,u);try{const fixed=evaluate(trial,false,37),z=bestFocus(fixed.bundle,trial.imageZ-t.compensation,trial.imageZ+t.compensation),comp=evaluate({...trial,imageZ:Math.max(trial.t1+trial.t2+1,z)},false,37);const a=fixed.rms*1000,b=comp.rms*1000;if(a<=t.limit)passFixed++;if(b<=t.limit)passComp++;rows.push({sample:i+1,fixed:a,compensated:b,focusShift:comp.imageZ-trial.imageZ,errors:u,valid:true});}catch{invalid++;rows.push({sample:i+1,fixed:null,compensated:null,focusShift:null,errors:u,valid:false});}}
+ const stat=key=>{const v=rows.filter(r=>r.valid).map(r=>r[key]);return{median:quantile(v,.5),p95:quantile(v,.95),max:v.length?Math.max(...v):NaN};};
+ const nominal=evaluate(p,false,37).rms*1000,sensitivity=[];const groups=[['r1','前表面曲率',0],['r2','胶合面曲率',1],['r3','后表面曲率',2],['t1','冠玻璃厚度',3],['t2','火石玻璃厚度',4],['dx','横向偏心 X',5],['dy','横向偏心 Y',6],['tilt','镜组倾斜',7],['dn1','冠玻璃折射率',8],['dn2','火石玻璃折射率',9],['imageZ','像面位置',10]];
+ for(const[key,label,i]of groups){let vals=[];for(const sign of[-1,1]){const u=Array(11).fill(0);u[i]=sign;try{vals.push(evaluate(applyErrors(p,t,u),false,37).rms*1000);}catch{vals.push(null);}}sensitivity.push({key,label,minus:vals[0],plus:vals[1],change:vals.every(v=>v!==null)?Math.max(...vals)-nominal:null});}
+ sensitivity.sort((a,b)=>(b.change??Infinity)-(a.change??Infinity));return{params:t,rows,invalid,nominal,fixed:{...stat('fixed'),pass:passFixed,yield:passFixed/t.samples,ci:wilson(passFixed,t.samples)},compensated:{...stat('compensated'),pass:passComp,yield:passComp/t.samples,ci:wilson(passComp,t.samples)},sensitivity};}
+const materials={aluminum:{name:'铝合金（代表值）',E:69e9,rho:2700,alpha:23e-6,yield:240e6},titanium:{name:'钛合金（代表值）',E:114e9,rho:4430,alpha:8.6e-6,yield:830e6},steel:{name:'结构钢（代表值）',E:200e9,rho:7850,alpha:12e-6,yield:250e6}};
+const caeDefaults={material:'aluminum',length:80,width:25,height:3,elements:16,force:.5,tipMass:.02,gravity:1,deltaT:.15,mirrorDiameter:25,distance:2,damping:.02,harmonicForce:.1,angleLimit:100,freqLimit:100};
+const zeros=n=>Array.from({length:n},()=>Array(n).fill(0)),mv=(a,v)=>a.map(row=>dot(row,v));
+function solve(a,b){a=a.map((r,i)=>[...r,b[i]]);const n=b.length;for(let k=0;k<n;k++){let p=k;for(let i=k+1;i<n;i++)if(Math.abs(a[i][k])>Math.abs(a[p][k]))p=i;[a[k],a[p]]=[a[p],a[k]];if(Math.abs(a[k][k])<1e-25)throw Error('矩阵奇异，请检查边界条件');for(let i=k+1;i<n;i++){const m=a[i][k]/a[k][k];a[i][k]=0;for(let j=k+1;j<=n;j++)a[i][j]-=m*a[k][j];}}const x=Array(n).fill(0);for(let i=n-1;i>=0;i--){x[i]=(a[i][n]-a[i].slice(i+1,n).reduce((s,v,j)=>s+v*x[i+j+1],0))/a[i][i];}return x;}
+function cholesky(a){const n=a.length,l=zeros(n);for(let i=0;i<n;i++)for(let j=0;j<=i;j++){let s=a[i][j];for(let k=0;k<j;k++)s-=l[i][k]*l[j][k];if(i===j){if(s<=0)throw Error('质量矩阵非正定');l[i][j]=Math.sqrt(s);}else l[i][j]=s/l[j][j];}return l;}
+function lowerSolve(l,b){const x=Array(b.length).fill(0);for(let i=0;i<b.length;i++)x[i]=(b[i]-l[i].slice(0,i).reduce((s,v,j)=>s+v*x[j],0))/l[i][i];return x;}
+function upperTransposeSolve(l,b){const n=b.length,x=Array(n).fill(0);for(let i=n-1;i>=0;i--){let s=b[i];for(let j=i+1;j<n;j++)s-=l[j][i]*x[j];x[i]=s/l[i][i];}return x;}
+function eigSym(a){a=a.map(r=>r.slice());const n=a.length,v=zeros(n);for(let i=0;i<n;i++)v[i][i]=1;for(let sweep=0;sweep<60;sweep++){let largest=0,diag=0;for(let i=0;i<n;i++)diag=Math.max(diag,Math.abs(a[i][i]));for(let p=0;p<n;p++)for(let q=p+1;q<n;q++){const apq=a[p][q];largest=Math.max(largest,Math.abs(apq));if(Math.abs(apq)<diag*1e-14)continue;const tau=(a[q][q]-a[p][p])/(2*apq),t=(tau>=0?1:-1)/(Math.abs(tau)+Math.sqrt(1+tau*tau)),c=1/Math.sqrt(1+t*t),s=t*c,app=a[p][p],aqq=a[q][q];a[p][p]=app-t*apq;a[q][q]=aqq+t*apq;a[p][q]=a[q][p]=0;for(let k=0;k<n;k++){if(k!==p&&k!==q){const akp=a[k][p],akq=a[k][q];a[k][p]=a[p][k]=c*akp-s*akq;a[k][q]=a[q][k]=s*akp+c*akq;}const vkp=v[k][p],vkq=v[k][q];v[k][p]=c*vkp-s*vkq;v[k][q]=s*vkp+c*vkq;}}if(largest<diag*1e-12)break;}return Array.from({length:n},(_,i)=>({value:a[i][i],vector:v.map(r=>r[i])})).sort((a,b)=>a.value-b.value);}
+function modal(k,m){const l=cholesky(m),n=k.length,inv=zeros(n);for(let j=0;j<n;j++){const col=lowerSolve(l,Array.from({length:n},(_,i)=>i===j?1:0));for(let i=0;i<n;i++)inv[i][j]=col[i];}const temp=zeros(n),c=zeros(n);for(let i=0;i<n;i++)for(let j=0;j<n;j++)for(let h=0;h<n;h++)temp[i][j]+=inv[i][h]*k[h][j];for(let i=0;i<n;i++)for(let j=0;j<n;j++)for(let h=0;h<n;h++)c[i][j]+=temp[i][h]*inv[j][h];for(let i=0;i<n;i++)for(let j=i+1;j<n;j++)c[i][j]=c[j][i]=(c[i][j]+c[j][i])/2;return eigSym(c).filter(e=>e.value>0).map(e=>({lambda:e.value,frequency:Math.sqrt(e.value)/(2*PI),vector:upperTransposeSolve(l,e.vector)}));}
+function beam(p,withModes=true){const mat=materials[p.material];if(!mat)throw Error('未知结构材料');for(const key of Object.keys(caeDefaults))if(key!=='material'&&!Number.isFinite(p[key]))throw Error('结构参数必须为有限数值');if(p.length<=0||p.width<=0||p.height<=0||p.elements<2||p.elements>32||p.tipMass<0||p.damping<=0||p.distance<=0||p.mirrorDiameter<=0)throw Error('请检查尺寸、质量、网格或阻尼');
+ const ne=Math.round(p.elements),n=2*(ne+1),L=p.length/1000,b=p.width/1000,h=p.height/1000,A=b*h,I=b*h*h*h/12,le=L/ne,EI=mat.E*I,k=zeros(n),m=zeros(n),f=Array(n).fill(0),q=mat.rho*A*9.81*p.gravity,curvature=mat.alpha*p.deltaT/h;
+ const ke=[[12,6*le,-12,6*le],[6*le,4*le*le,-6*le,2*le*le],[-12,-6*le,12,-6*le],[6*le,2*le*le,-6*le,4*le*le]].map(r=>r.map(v=>v*EI/(le**3))),me=[[156,22*le,54,-13*le],[22*le,4*le*le,13*le,-3*le*le],[54,13*le,156,-22*le],[-13*le,-3*le*le,-22*le,4*le*le]].map(r=>r.map(v=>v*mat.rho*A*le/420));
+ for(let e=0;e<ne;e++){const ids=[2*e,2*e+1,2*e+2,2*e+3],load=[q*le/2,q*le*le/12-EI*curvature,q*le/2,-q*le*le/12+EI*curvature];for(let i=0;i<4;i++){f[ids[i]]+=load[i];for(let j=0;j<4;j++){k[ids[i]][ids[j]]+=ke[i][j];m[ids[i]][ids[j]]+=me[i][j];}}}
+ f[n-2]+=p.force+p.tipMass*9.81*p.gravity;m[n-2][n-2]+=p.tipMass;m[n-1][n-1]+=p.tipMass*sq(p.mirrorDiameter/2000)/4;
+ const kr=k.slice(2).map(r=>r.slice(2)),mr=m.slice(2).map(r=>r.slice(2)),u=[0,0,...solve(kr,f.slice(2))],residual=mv(k,u).map((v,i)=>v-f[i]),modes=withModes?modal(kr,mr):[],samples=[];
+ for(let e=0;e<ne;e++)for(let j=0;j<=4;j++){if(e>0&&j===0)continue;const t=j/4,nn=[1-3*t*t+2*t*t*t,le*(t-2*t*t+t*t*t),3*t*t-2*t*t*t,le*(-t*t+t*t*t)],B=[(-6+12*t)/(le*le),(-4+6*t)/le,(6-12*t)/(le*le),(-2+6*t)/le],ue=u.slice(2*e,2*e+4);samples.push({x:(e+t)*le,w:dot(nn,ue),stress:mat.E*(dot(B,ue)-curvature)*h/2});}
+ const theta=u[n-1],pointing=2*theta,tip=u[n-2],peakStress=Math.max(...samples.map(s=>Math.abs(s.stress))),mass=mat.rho*A*L+p.tipMass,forceBalance=residual[0]+p.force+p.tipMass*9.81*p.gravity+q*L;
+ let response=[];if(withModes){const upper=Math.min(3000,modes[2].frequency*1.15),hzs=Array.from({length:241},(_,j)=>j*upper/240).concat(modes.slice(0,3).map(m=>m.frequency).filter(f=>f<upper)).sort((a,b)=>a-b);for(const hz of hzs){const w=2*PI*hz;let re=0,im=0;for(const mode of modes.slice(0,12)){const v=mode.vector,den=mode.lambda-w*w,loss=2*p.damping*Math.sqrt(mode.lambda)*w,numerator=v[v.length-1]*v[v.length-2]*p.harmonicForce,z=den*den+loss*loss;re+=numerator*den/z;im-=numerator*loss/z;}response.push([hz,2*Math.hypot(re,im)*180/PI*3600]);}}
+ return{params:p,material:mat,L,A,I,EI,mass,tip,theta,pointing,arcsec:pointing*180/PI*3600,spotShift:p.distance*Math.tan(pointing),peakStress,safety:peakStress?mat.yield/peakStress:Infinity,modes,response,samples,u,forceBalance,slenderness:L/h,thermalOnlyTheta:curvature*L,mechanicalTheta:theta-curvature*L};
+}
+function designSweep(p){const rows=[];for(let h=1.5;h<=8.001;h+=.25){const r=beam({...p,height:h},true),pass=Math.abs(r.arcsec)<=p.angleLimit&&r.modes[0].frequency>=p.freqLimit&&r.safety>=2;rows.push({height:h,mass:r.mass*1000,pointing:Math.abs(r.arcsec),frequency:r.modes[0].frequency,safety:r.safety,pass});}return{rows,best:rows.filter(r=>r.pass).sort((a,b)=>a.mass-b.mass)[0]||null};}
+return{glasses,index,refract,opticalDefaults,toleranceDefaults,surfaces,sag,trace,paraxial,pupilPoints,bundle,bestFocus,evaluate,geometricMTF,optimize,tolerance,quantile,materials,caeDefaults,beam,designSweep,rng};
+});

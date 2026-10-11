@@ -1,0 +1,55 @@
+// Run: node projects/engineering/tests.cjs
+'use strict';
+const E=require('./engine.js'),fs=require('node:fs'),path=require('node:path');
+const tests=[];
+function check(name,actual,expected,tolerance,unit='',relative=false){const error=Math.abs(actual-expected)/(relative?Math.abs(expected)||1:1),pass=Number.isFinite(error)&&error<=tolerance;tests.push({name,actual,expected,error,tolerance,unit,relative,pass});if(!pass)throw Error(name+': '+actual+' vs '+expected+' (error '+error+')');}
+function truth(name,value){check(name,value?1:0,1,0);}
+const p={...E.opticalDefaults};
+check('N-BK7 d 线折射率 / SCHOTT',E.index('N-BK7',587.6),1.51680,1e-5);
+check('N-SF5 d 线折射率 / SCHOTT',E.index('N-SF5',587.6),1.67271,1e-5);
+const incident=40*Math.PI/180,r=E.refract([Math.sin(incident),0,Math.cos(incident)],[0,0,-1],1,1.5);
+check('平面折射 / Snell 角度',Math.asin(r[0]),Math.asin(Math.sin(incident)/1.5),1e-12,'rad');
+const reversed=E.refract(r.map(x=>-x),[0,0,1],1.5,1);
+check('折射光路可逆性',reversed[0],-Math.sin(incident),1e-12);
+truth('全反射判据',E.refract([Math.sin(50*Math.PI/180),0,Math.cos(50*Math.PI/180)],[0,0,-1],1.5,1)===null);
+const near=E.trace(p,0,587.6,.001,0),par=E.paraxial(p);
+check('精确追迹近轴极限 / 矩阵焦点',-near.a/near.b,par.focus,1e-4,'mm');
+const ra=E.trace(p,0,587.6,2,1),rb=E.trace(p,0,587.6,-2,-1);
+check('轴上成像中心反演对称性 X',ra.a+rb.a,0,1e-12,'mm');
+check('轴上成像中心反演对称性 Y',ra.c+rb.c,0,1e-12,'mm');
+const initial=E.evaluate(p,true,301),opt=E.optimize({...p,rays:121},110),fine=E.evaluate(opt.after.params,true,301);
+truth('301 光线/视场/波长独立复核：优化降低 RMS',fine.rms<initial.rms*.8);
+truth('优化保持目标焦距 ±0.2%',Math.abs(fine.efl-p.target)/p.target<.002);
+truth('镜组光线通过率',fine.throughput===1);
+const mtf=E.geometricMTF(fine.spots[2].points,'x');
+check('几何 MTF 零频归一化',mtf[0][1],1,1e-12);
+truth('几何 MTF 幅值边界',mtf.every(v=>v[1]>=0&&v[1]<=1+1e-12));
+const t={...E.toleranceDefaults,samples:12},tol1=E.tolerance(fine.params,t),tol2=E.tolerance(fine.params,t);
+truth('固定随机种子完全复现样本',JSON.stringify(tol1.rows)===JSON.stringify(tol2.rows));
+truth('逐样本调焦补偿不恶化 RMS',tol1.rows.every(r=>!r.valid||r.compensated<=r.fixed+1e-9));
+const zero=E.tolerance(fine.params,{...t,radius:0,thickness:0,decenter:0,tilt:0,index:0,focus:0,compensation:0});
+check('零公差恢复标称像质',Math.max(...zero.rows.map(r=>Math.abs(r.fixed-zero.nominal))),0,1e-10,'µm');
+const base={...E.caeDefaults,force:1,gravity:0,deltaT:0,tipMass:0,elements:16},staticBeam=E.beam(base,false),{L,EI,I}=staticBeam,h=base.height/1000;
+check('端力悬臂挠度 / 解析解',staticBeam.tip,base.force*L**3/(3*EI),1e-8,'m',true);
+check('端力悬臂转角 / 解析解',staticBeam.theta,base.force*L**2/(2*EI),1e-8,'rad',true);
+check('根部弯曲应力 / 解析解',staticBeam.peakStress,base.force*L*h/(2*I),1e-8,'Pa',true);
+check('整体竖向力平衡',staticBeam.forceBalance,0,1e-8,'N');
+const thermal=E.beam({...base,force:0,deltaT:2},false),kappa=thermal.material.alpha*2/h;
+check('自由温差弯曲挠度',thermal.tip,kappa*L*L/2,1e-8,'m',true);
+check('自由温差弯曲转角',thermal.theta,kappa*L,1e-8,'rad',true);
+check('无约束热弯曲无残余应力',thermal.peakStress,0,.02,'Pa');
+const gravity=E.beam({...base,force:0,gravity:1},false),q=gravity.material.rho*gravity.A*9.81;
+check('均布重力载荷挠度',gravity.tip,q*L**4/(8*EI),1e-8,'m',true);
+check('反射光束角变化 / 二倍转角',staticBeam.pointing,2*staticBeam.theta,1e-15,'rad');
+const empty=E.beam({...base,force:0},false);check('零外载位移',empty.tip,0,1e-15,'m');
+const beta=[1.875104068711961,4.694091132974174,7.854757438237613],exact=beta.map(b=>b*b/(2*Math.PI)*Math.sqrt(EI/(staticBeam.material.rho*staticBeam.A*L**4))),convergence=[];
+for(const elements of[2,4,8,16,24]){const result=E.beam({...base,elements}),freq=result.modes.slice(0,3).map(r=>r.frequency),errors=freq.map((f,i)=>100*Math.abs(f-exact[i])/exact[i]);convergence.push({elements,frequencies:freq,errors});}
+convergence[4].frequencies.forEach((f,i)=>check('第 '+(i+1)+' 阶悬臂模态 / 解析解',f,exact[i],.0001,'Hz',true));
+truth('一阶模态网格收敛',convergence[4].errors[0]<convergence[0].errors[0]);
+const baseline=E.beam({...E.caeDefaults}),sweep=E.designSweep({...E.caeDefaults});
+truth('厚度选型满足全部约束',sweep.best&&sweep.best.pointing<=E.caeDefaults.angleLimit&&sweep.best.frequency>=E.caeDefaults.freqLimit&&sweep.best.safety>=2);
+truth('厚度选型为离散扫描中最轻可行方案',sweep.rows.filter(r=>r.pass).every(r=>r.mass>=sweep.best.mass));
+const fullTol=E.tolerance(opt.after.params,{...E.toleranceDefaults});
+const snapshot={schema:'engineering-validation/v1',generatedAt:new Date().toISOString(),passed:tests.filter(t=>t.pass).length,total:tests.length,tests,convergence,analyticFrequencies:exact,optics:{initial:{rmsUm:initial.rms*1000,efl:initial.efl},optimized:{rmsUm:fine.rms*1000,efl:fine.efl,params:fine.params},improvement:1-fine.rms/initial.rms},tolerance:{samples:fullTol.rows.length,seed:fullTol.params.seed,fixed:fullTol.fixed,compensated:fullTol.compensated,invalid:fullTol.invalid},cae:{baseline:{pointingArcsec:baseline.arcsec,frequencyHz:baseline.modes[0].frequency,tipUm:baseline.tip*1e6},best:sweep.best}};
+fs.writeFileSync(path.join(__dirname,'validation.json'),JSON.stringify(snapshot,null,2)+'\n');
+console.log(JSON.stringify({passed:snapshot.passed,total:snapshot.total,optics:snapshot.optics,tolerance:snapshot.tolerance,cae:snapshot.cae},null,2));
