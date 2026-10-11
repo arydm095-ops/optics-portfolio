@@ -1,0 +1,25 @@
+'use strict';
+const T=require('./model.js'),fs=require('node:fs'),path=require('node:path'),tests=[];
+function check(name,actual,expected,tol,relative=false){const error=Math.abs(actual-expected)/(relative?Math.abs(expected)||1:1),pass=Number.isFinite(error)&&error<=tol;tests.push({name,actual,expected,error,tolerance:tol,relative,pass});if(!pass)throw Error(name+': '+error);}
+const p={...T.defaults},r=T.analyze(p),zero=T.analyze({...p,absorbed:0}),ref=T.referenceCenter(p);
+check('环形控制体吸热总功率',r.thermal.source.reduce((a,b)=>a+b,0),p.absorbed,1e-12);
+check('边界导热 / 全局能量平衡',r.thermal.outflow,p.absorbed,1e-10);
+check('轴心温升 / 独立积分解析参考',r.thermal.center,ref,.0005,true);
+check('零吸热恢复冷却温度',zero.thermal.center,p.coolant,1e-10);
+check('功率加倍 / 温升线性',T.heat({...p,absorbed:2*p.absorbed}).rise,2*r.thermal.rise,1e-9);
+check('导热率加倍 / 温升减半',T.heat({...p,conductivity:2*p.conductivity}).rise,r.thermal.rise/2,1e-9);
+check('零吸热 / 无热透镜光焦度',zero.thermal.power,0,1e-15);
+const zr=Math.PI*(p.waist/1000)**2/(p.wavelength*1e-9*p.m2);
+check('自由高斯光束 / 瑞利长度',zero.beam.zr,zr,1e-12);
+check('自由传播 / w(z) 解析式',zero.beam.screen.hot,p.waist/1000*Math.sqrt(1+(p.screenZ/zr)**2),1e-12);
+check('自由发散半角 / λM²/(πw0)',zero.beam.inputDivergence,p.wavelength*1e-9*p.m2/(Math.PI*p.waist/1000),1e-12);
+const compensate=T.analyze({...p,compensator:-r.thermal.focal});
+check('同面等效补偿 / 光束恢复',compensate.beam.screen.compensated,zero.beam.screen.hot,1e-12);
+const positive=T.qLens({re:.2,im:.4},2),reversed=T.qLens(positive,-2);
+check('薄透镜 q 变换可逆 / 实部',reversed.re,.2,1e-12);
+check('薄透镜 q 变换可逆 / 虚部',reversed.im,.4,1e-12);
+check('dn/dT 符号 / 发散热透镜',T.analyze({...p,dndT:-p.dndT}).thermal.power,-r.thermal.power,1e-12);
+const convergence=[40,80,120,240].map(cells=>{const h=T.heat({...p,cells});return{cells,center:h.center,error:Math.abs(h.center-ref)};});
+check('热网格收敛',convergence[3].error<convergence[0].error?1:0,1,0);
+const out={generatedAt:new Date().toISOString(),passed:tests.length,total:tests.length,tests,referenceCenter:ref,convergence,baseline:{params:p,peakC:r.thermal.center,thermalFocalM:r.thermal.focal,inputDivergenceMrad:r.beam.inputDivergence*1000,hotDivergenceMrad:r.beam.thermalDivergence*1000,coldScreenRadiusMm:r.beam.screen.cold*1000,hotScreenRadiusMm:r.beam.screen.hot*1000,residualRmsWaves:r.residualRms/(p.wavelength*1e-9)}};
+fs.writeFileSync(path.join(__dirname,'validation.json'),JSON.stringify(out,null,2)+'\n');console.log(JSON.stringify({passed:out.passed,baseline:out.baseline,convergence},null,2));

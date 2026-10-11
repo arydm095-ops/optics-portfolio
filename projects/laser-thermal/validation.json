@@ -1,0 +1,190 @@
+{
+  "generatedAt": "2026-10-11T14:45:17.855Z",
+  "passed": 15,
+  "total": 15,
+  "tests": [
+    {
+      "name": "环形控制体吸热总功率",
+      "actual": 1.5000000000000002,
+      "expected": 1.5,
+      "error": 2.220446049250313e-16,
+      "tolerance": 1e-12,
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "边界导热 / 全局能量平衡",
+      "actual": 1.5000000000000773,
+      "expected": 1.5,
+      "error": 7.72715225139109e-14,
+      "tolerance": 1e-10,
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "轴心温升 / 独立积分解析参考",
+      "actual": 102.70474695060086,
+      "expected": 102.66136142415857,
+      "error": 0.0004226081345545403,
+      "tolerance": 0.0005,
+      "relative": true,
+      "pass": true
+    },
+    {
+      "name": "零吸热恢复冷却温度",
+      "actual": 25.000000000000778,
+      "expected": 25,
+      "error": 7.780442956573097e-13,
+      "tolerance": 1e-10,
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "功率加倍 / 温升线性",
+      "actual": 155.40949390120093,
+      "expected": 155.40949390120173,
+      "error": 7.958078640513122e-13,
+      "tolerance": 1e-9,
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "导热率加倍 / 温升减半",
+      "actual": 38.85237347530079,
+      "expected": 38.85237347530043,
+      "error": 3.552713678800501e-13,
+      "tolerance": 1e-9,
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "零吸热 / 无热透镜光焦度",
+      "actual": 0,
+      "expected": 0,
+      "error": 0,
+      "tolerance": 1e-15,
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "自由高斯光束 / 瑞利长度",
+      "actual": 0.3616965226172459,
+      "expected": 0.3616965226172459,
+      "error": 0,
+      "tolerance": 1e-12,
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "自由传播 / w(z) 解析式",
+      "actual": 0.002924009004216858,
+      "expected": 0.0029240090042168577,
+      "error": 4.336808689942018e-19,
+      "tolerance": 1e-12,
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "自由发散半角 / λM²/(πw0)",
+      "actual": 0.0009676620539987238,
+      "expected": 0.0009676620539987238,
+      "error": 0,
+      "tolerance": 1e-12,
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "同面等效补偿 / 光束恢复",
+      "actual": 0.002924009004216858,
+      "expected": 0.002924009004216858,
+      "error": 0,
+      "tolerance": 1e-12,
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "薄透镜 q 变换可逆 / 实部",
+      "actual": 0.20000000000000004,
+      "expected": 0.2,
+      "error": 2.7755575615628914e-17,
+      "tolerance": 1e-12,
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "薄透镜 q 变换可逆 / 虚部",
+      "actual": 0.4,
+      "expected": 0.4,
+      "error": 0,
+      "tolerance": 1e-12,
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "dn/dT 符号 / 发散热透镜",
+      "actual": -3.113901060493605,
+      "expected": -3.113901060493605,
+      "error": 0,
+      "tolerance": 1e-12,
+      "relative": false,
+      "pass": true
+    },
+    {
+      "name": "热网格收敛",
+      "actual": 1,
+      "expected": 1,
+      "error": 0,
+      "tolerance": 0,
+      "relative": false,
+      "pass": true
+    }
+  ],
+  "referenceCenter": 102.66136142415857,
+  "convergence": [
+    {
+      "cells": 40,
+      "center": 102.95228117839667,
+      "error": 0.2909197542381037
+    },
+    {
+      "cells": 80,
+      "center": 102.7498198891352,
+      "error": 0.08845846497662535
+    },
+    {
+      "cells": 120,
+      "center": 102.70474695060086,
+      "error": 0.0433855264422931
+    },
+    {
+      "cells": 240,
+      "center": 102.673944584103,
+      "error": 0.012583159944426825
+    }
+  ],
+  "baseline": {
+    "params": {
+      "absorbed": 1.5,
+      "pumpRadius": 1,
+      "rodRadius": 5,
+      "length": 5,
+      "conductivity": 1.38,
+      "dndT": 9,
+      "coolant": 25,
+      "wavelength": 1064,
+      "waist": 0.35,
+      "m2": 1,
+      "lensZ": 0.15,
+      "screenZ": 3,
+      "compensator": 0,
+      "cells": 120
+    },
+    "peakC": 102.70474695060086,
+    "thermalFocalM": 0.3211405823669566,
+    "inputDivergenceMrad": 0.9676620539987237,
+    "hotDivergenceMrad": 1.2057088808441478,
+    "coldScreenRadiusMm": 2.924009004216858,
+    "hotScreenRadiusMm": 3.1943528547782294,
+    "residualRmsWaves": 0.014309713572304228
+  }
+}
