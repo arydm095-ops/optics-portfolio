@@ -50,7 +50,7 @@
   </section>
   <section class="panel" id="source-panel" hidden>
     <div class="section-heading"><h2>C工程与验证记录</h2><p>浏览器使用device.c编译的WebAssembly模块。相同C核心同时接受本机GCC测试和WebAssembly数值一致性检查。</p></div>
-    <div class="source-links"><a href="embedded-device-source.zip" download>下载C工程</a><a href="README.md" target="_blank">查看项目说明</a><a href="validation.json" target="_blank">查看验证数据</a><button id="self-test" class="primary">运行浏览器自检</button></div>
+    <div class="source-links"><a href="embedded-device-source.zip" download>下载C工程</a><a href="validation.json" target="_blank">查看验证数据</a><button id="self-test" class="primary">运行浏览器自检</button></div>
     <div id="live-test-status" class="status">自检在独立实例中执行，保留当前设备状态。</div><div class="card" id="live-tests" hidden></div>
     <article class="card"><div class="card-title"><h3>源码</h3><select id="source-file" aria-label="源码文件"><option value="device.c">device.c · 控制与协议核心</option><option value="device.h">device.h · 接口与状态定义</option><option value="freertos_app.c">freertos_app.c · 任务工程</option><option value="FreeRTOSConfig.h">FreeRTOSConfig.h · 内核配置</option><option value="tests.c">tests.c · 核心测试</option></select></div><pre id="source-code" class="source-code">正在加载…</pre></article>
     <details class="card"><summary>主机测试记录</summary><div id="test-table"></div></details>
