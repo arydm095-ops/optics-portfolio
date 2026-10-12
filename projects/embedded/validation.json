@@ -1,0 +1,290 @@
+{
+  "generatedAt": "2026-10-12T03:53:19.858017+00:00",
+  "nativeCompiler": "GCC 8.1.0 / x86_64-w64-mingw32",
+  "wasmCompiler": "Clang 16 / WASI SDK 20",
+  "kernel": "FreeRTOS V11.2.0 / official MSVC-MingW port",
+  "passed": 41,
+  "total": 41,
+  "tests": [
+    {
+      "id": "crc16_modbus_known_vector",
+      "passed": true
+    },
+    {
+      "id": "crc32_known_vector",
+      "passed": true
+    },
+    {
+      "id": "boot_selects_verified_slot",
+      "passed": true
+    },
+    {
+      "id": "valid_uart_frame_changes_target",
+      "passed": true
+    },
+    {
+      "id": "bad_crc_rejects_command",
+      "passed": true
+    },
+    {
+      "id": "partial_frame_waits_for_tail",
+      "passed": true
+    },
+    {
+      "id": "split_frame_reassembles",
+      "passed": true
+    },
+    {
+      "id": "target_range_checked",
+      "passed": true
+    },
+    {
+      "id": "sampling_range_checked",
+      "passed": true
+    },
+    {
+      "id": "uart_ring_overflow_bounded",
+      "passed": true
+    },
+    {
+      "id": "parser_resynchronises_after_noise",
+      "passed": true
+    },
+    {
+      "id": "dma_double_buffer_switches",
+      "passed": true
+    },
+    {
+      "id": "dma_block_mean_consumed",
+      "passed": true
+    },
+    {
+      "id": "sample_queue_overflow_bounded",
+      "passed": true
+    },
+    {
+      "id": "sample_queue_drained",
+      "passed": true
+    },
+    {
+      "id": "controller_tracks_reference",
+      "passed": true
+    },
+    {
+      "id": "controller_output_limited",
+      "passed": true
+    },
+    {
+      "id": "overcurrent_latches_and_disables_drive",
+      "passed": true
+    },
+    {
+      "id": "reset_denied_while_fault_present",
+      "passed": true
+    },
+    {
+      "id": "explicit_ack_restores_stopped_state",
+      "passed": true
+    },
+    {
+      "id": "undervoltage_protection",
+      "passed": true
+    },
+    {
+      "id": "encoder_failure_protection",
+      "passed": true
+    },
+    {
+      "id": "watchdog_detects_missing_control_task",
+      "passed": true
+    },
+    {
+      "id": "parameters_survive_power_cycle",
+      "passed": true
+    },
+    {
+      "id": "corrupt_parameters_fall_back_to_defaults",
+      "passed": true
+    },
+    {
+      "id": "valid_image_is_staged",
+      "passed": true
+    },
+    {
+      "id": "new_slot_crc_verified_before_boot",
+      "passed": true
+    },
+    {
+      "id": "new_firmware_enters_trial_boot",
+      "passed": true
+    },
+    {
+      "id": "healthy_firmware_confirmed",
+      "passed": true
+    },
+    {
+      "id": "confirmed_firmware_survives_restart",
+      "passed": true
+    },
+    {
+      "id": "corrupt_image_keeps_old_firmware",
+      "passed": true
+    },
+    {
+      "id": "interrupted_programming_keeps_old_slot",
+      "passed": true
+    },
+    {
+      "id": "unconfirmed_trial_rolls_back",
+      "passed": true
+    },
+    {
+      "id": "firmware_downgrade_rejected",
+      "passed": true
+    },
+    {
+      "id": "storage_image_restores_verified_firmware",
+      "passed": true
+    },
+    {
+      "id": "storage_checksum_rejects_corruption",
+      "passed": true
+    },
+    {
+      "id": "freertos_queue_preserves_sample_order",
+      "passed": true
+    },
+    {
+      "id": "freertos_blocked_control_task_wakes",
+      "passed": true
+    },
+    {
+      "id": "freertos_mutex_protects_shared_core",
+      "passed": true
+    },
+    {
+      "id": "freertos_communication_task_executes_commands",
+      "passed": true
+    },
+    {
+      "id": "freertos_four_tasks_execute_on_official_kernel",
+      "passed": true
+    }
+  ],
+  "nativeSnapshot": [
+    2020,
+    2,
+    960,
+    1057.765077332,
+    1200,
+    0,
+    5000,
+    24000,
+    36,
+    0,
+    25,
+    2,
+    0,
+    0,
+    1,
+    5,
+    250,
+    1362,
+    0,
+    0,
+    100,
+    0,
+    0,
+    0,
+    100,
+    0,
+    0,
+    404,
+    202,
+    103,
+    20,
+    30,
+    1,
+    1,
+    1,
+    4,
+    0,
+    8,
+    729
+  ],
+  "image": {
+    "version": 101,
+    "length": 8192,
+    "crc32": 783871656
+  },
+  "wasmTests": [
+    {
+      "id": "wasm_has_no_external_runtime_imports",
+      "passed": true
+    },
+    {
+      "id": "wasm_crc16_reference",
+      "passed": true
+    },
+    {
+      "id": "wasm_crc32_unsigned_reference",
+      "passed": true
+    },
+    {
+      "id": "native_and_wasm_39_fields_agree",
+      "passed": true
+    },
+    {
+      "id": "wasm_waits_for_partial_frame",
+      "passed": true
+    },
+    {
+      "id": "wasm_reassembles_frame",
+      "passed": true
+    },
+    {
+      "id": "wasm_rejects_corrupt_frame",
+      "passed": true
+    },
+    {
+      "id": "wasm_dma_bank_switch",
+      "passed": true
+    },
+    {
+      "id": "wasm_watchdog_shuts_down_drive",
+      "passed": true
+    },
+    {
+      "id": "wasm_nv_parameter_recovery",
+      "passed": true
+    },
+    {
+      "id": "wasm_image_matches_build_checksum",
+      "passed": true
+    },
+    {
+      "id": "wasm_trial_boot_switches_slot",
+      "passed": true
+    },
+    {
+      "id": "wasm_trial_boot_rollback",
+      "passed": true
+    },
+    {
+      "id": "wasm_corrupt_image_preserves_slot",
+      "passed": true
+    },
+    {
+      "id": "wasm_storage_image_round_trip",
+      "passed": true
+    },
+    {
+      "id": "wasm_storage_checksum_detects_corruption",
+      "passed": true
+    }
+  ],
+  "wasmPassed": 16,
+  "wasmTotal": 16,
+  "sourceSHA256": "62b6a8533b728c73a8b89de80ac944a4e41b221d1cb9e5e4c9de7dfae14a84cf",
+  "wasmSHA256": "1d5cd4dd6b31f9c9642cc2d00bcbafef83842ac545a9a30415f1a57ad3f68931"
+}

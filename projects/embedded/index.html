@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>嵌入式设备控制系统 · 张杨阳</title>
+  <meta name="description" content="C固件核心、FreeRTOS任务工程、ADC/DMA采集、UART协议、故障保护、Flash参数存储与Bootloader双分区更新。">
+  <link rel="icon" href="../../assets/favicon.svg"><link rel="stylesheet" href="../../assets/portfolio-theme.css?v=20261012b">
+  <link rel="stylesheet" href="style.css?v=20261012a">
+</head>
+<body>
+<header class="top"><div class="top-inner"><div><a href="../../index.html">← 张杨阳的作品集</a><h1>嵌入式设备控制系统</h1><p>采集、通信、任务调度与固件管理</p></div><div class="top-actions"><button id="open-source">查看C源码</button><a class="button-link" href="embedded-device-source.zip" download>下载工程</a></div></div></header>
+<main>
+  <section class="project-overview" aria-label="项目技术栈">
+    <div class="tech-stack"><span>C语言</span><span>FreeRTOS</span><span>ADC/DMA</span><span>UART/CRC</span><span>消息队列</span><span>Flash</span><span>Bootloader</span></div>
+    <div class="execution"><span id="backend-status" class="execution-state">正在加载C核心…</span><span id="validation-badge">正在加载验证记录…</span></div>
+    <div class="architecture"><span>采集与DMA双缓冲</span><b>→</b><span>队列与控制任务</span><b>→</b><span>设备状态与故障保护</span><span class="architecture-side">通信解析 · 参数存储 · 双分区更新</span></div>
+  </section>
+  <nav class="tabs" aria-label="系统模块">
+    <button data-tab="runtime" aria-selected="true">运行与采集</button><button data-tab="protocol">协议通信</button><button data-tab="tasks">任务调度</button><button data-tab="firmware">固件管理</button><button data-tab="source">源码与验证</button>
+  </nav>
+  <div id="status" class="status" role="status" aria-live="polite">C核心加载后可发送指令。</div>
+  <section class="panel" id="runtime-panel">
+    <div class="workspace"><aside class="card inspector"><h2>设备控制</h2>
+      <div class="button-pair"><button id="start" class="primary">启动设备</button><button id="stop">停止设备</button></div>
+      <label for="target">目标速度<span>rpm</span></label><input id="target" type="number" min="0" max="2400" step="100" value="800">
+      <label for="sample">采样周期<span>ms</span></label><select id="sample"><option value="1">1</option><option value="2">2</option><option value="5" selected>5</option><option value="10">10</option><option value="20">20</option></select>
+      <label for="gain">控制比例增益</label><input id="gain" type="range" min="50" max="800" step="25" value="250"><div class="small" id="gain-value">0.250</div>
+      <div class="inspector-section"><h3>故障注入</h3><label for="fault">异常工况</label><select id="fault"><option value="1">过流</option><option value="2">母线欠压</option><option value="4">编码器失联</option><option value="8">控制任务停止喂狗</option></select><button id="inject" class="danger">注入异常</button><div class="button-pair"><button id="remove-fault">移除异常</button><button id="ack-fault">确认并复位</button></div><p class="small">异常移除后，故障保持锁存，需发送复位指令。</p></div>
+      <div class="inspector-section"><button id="pause">暂停时间</button><button id="advance">推进100ms</button><button id="export">导出运行记录</button></div>
+    </aside><div class="results"><div class="metrics" id="metrics"></div>
+      <div class="card state-card"><div><span class="eyebrow">设备状态机</span><strong id="mode-label">等待初始化</strong></div><div class="state-path"><span data-mode="0">停止</span><i>→</i><span data-mode="1">运行</span><i>→</i><span data-mode="2">故障锁存</span><i>→</i><span data-mode="3">固件更新</span></div><p id="fault-label">等待输入</p></div>
+      <div class="chart-grid"><article class="card"><h3>ADC采样与DMA块均值</h3><canvas id="adc-chart" aria-label="ADC采集波形"></canvas><p class="small">16点组成一块，完成后切换缓冲区并交给消费任务。</p></article><article class="card"><h3>执行器速度与目标</h3><canvas id="speed-chart" aria-label="执行器速度"></canvas><p class="small">一阶执行器对象，带输出限幅和积分抗饱和。</p></article></div>
+      <article class="card"><div class="card-title"><h3>DMA双缓冲</h3><span id="dma-label" class="small"></span></div><div id="dma-banks"></div></article>
+      <article class="card"><div class="card-title"><h3>事件记录</h3><span class="small">状态切换、协议处理与故障动作</span></div><div class="event-log" id="events"></div></article>
+    </div></div>
+  </section>
+  <section class="panel" id="protocol-panel" hidden>
+    <div class="section-heading"><h2>UART指令协议</h2><p>字节流进入64字节环形缓冲区，经长度检查和CRC16校验后执行命令，并生成应答帧。</p></div>
+    <div class="protocol-grid"><article class="card"><h3>指令组装</h3><label for="command">命令</label><select id="command"><option value="2">设置目标速度 · 0x02</option><option value="3">设置采样周期 · 0x03</option><option value="1">启停设备 · 0x01</option><option value="16">保存参数 · 0x10</option><option value="17">故障复位 · 0x11</option></select><label for="command-value">数值</label><input id="command-value" type="number" value="1200" min="0" max="65535"><button id="make-frame">生成指令帧</button><label for="hex-frame">十六进制字节流</label><textarea id="hex-frame" rows="3" spellcheck="false" aria-label="十六进制指令帧"></textarea><div class="button-pair"><button id="send-frame" class="primary">发送整帧</button><button id="split-frame">分两段发送</button></div><div class="button-pair"><button id="corrupt-frame">破坏CRC后发送</button><button id="overflow-frame">注入接收溢出</button></div></article>
+    <div><article class="card"><h3>帧结构</h3><div class="frame-schema"><span>AA 55<small>帧头</small></span><span>SEQ<small>序号</small></span><span>CMD<small>命令</small></span><span>LEN<small>载荷长度</small></span><span>DATA<small>小端载荷</small></span><span>CRC16<small>低字节在前</small></span></div><p class="small">CRC16/MODBUS：初值0xFFFF，多项式0xA001；覆盖帧头到载荷。</p></article><article class="card"><h3>解析与应答</h3><div id="protocol-metrics" class="compact-metrics"></div><pre id="reply">尚未接收指令</pre><p id="reply-status" class="small"></p></article><article class="card"><h3>处理记录</h3><div id="protocol-events" class="event-log"></div></article></div></div>
+  </section>
+  <section class="panel" id="tasks-panel" hidden>
+    <div class="section-heading"><h2>周期任务与数据交互</h2><p>采集、控制、通信和健康监测分别调度，采集与消费通过有界队列交互。</p></div>
+    <div class="chart-grid"><article class="card"><h3>任务运行记录</h3><canvas id="task-chart" aria-label="周期任务时间线"></canvas><p class="small">横轴为C核心的逻辑时间，标记来自实际任务调用记录。</p></article><article class="card"><h3>周期与运行次数</h3><div id="task-table"></div><div class="button-pair"><button id="queue-overflow">注入采集队列溢出</button><button id="watchdog-test">停止控制任务</button></div><p id="queue-label" class="small"></p></article></div>
+    <article class="card"><h3>FreeRTOS任务工程</h3><p>使用官方内核V11.2.0，创建采集、控制、通信和健康任务；使用消息队列传递样本，互斥锁保护共享核心。下方记录来自Windows主机端口运行。</p><pre id="rtos-results">正在读取验证记录…</pre><p class="small">浏览器任务视图使用确定性调度；FreeRTOS内核任务由独立C工程执行。主机端口用于逻辑验证，时间不作为板端实时性能指标。</p></article>
+  </section>
+  <section class="panel" id="firmware-panel" hidden>
+    <div class="section-heading"><h2>Flash参数与双分区更新</h2><p>参数记录和镜像分别校验。新镜像写入非活动分区，试启动通过健康检查后确认；中断写入或未确认启动保留已确认版本。</p></div>
+    <div class="protocol-grid"><article class="card"><h3>参数记录</h3><div id="nv-summary"></div><button id="save-params" class="primary">保存当前参数</button><button id="power-cycle">模拟重新上电</button><button id="corrupt-nv">破坏参数校验后上电</button><p class="small">浏览器本地保存存储镜像，刷新后保留已保存参数和已确认固件。</p></article><div><article class="card"><h3>双分区Bootloader</h3><div id="flash-slots" class="flash-slots"></div><div class="upgrade-state"><strong id="upgrade-label">等待镜像</strong><span id="upgrade-percent">0%</span></div><progress id="upgrade-progress" max="1000" value="0"></progress><div class="button-pair"><button id="upgrade" class="primary">写入v1.1示例镜像</button><button id="bad-upgrade">写入损坏镜像</button></div><div class="button-pair"><button id="interrupt-upgrade">写入期间模拟掉电</button><button id="reboot-upgrade">重启并校验新版本</button></div><button id="reset-storage">恢复出厂存储</button><p class="small">Flash为C实现的双分区模型；示例镜像为8KB测试载荷，用于检查校验、分区切换与回退流程。</p></article><article class="card"><h3>存储与升级事件</h3><div class="event-log" id="firmware-events"></div></article></div></div>
+  </section>
+  <section class="panel" id="source-panel" hidden>
+    <div class="section-heading"><h2>C工程与验证记录</h2><p>浏览器使用device.c编译的WebAssembly模块。相同C核心同时接受本机GCC测试和WebAssembly数值一致性检查。</p></div>
+    <div class="source-links"><a href="embedded-device-source.zip" download>下载C工程</a><a href="README.md" target="_blank">查看项目说明</a><a href="validation.json" target="_blank">查看验证数据</a><button id="self-test" class="primary">运行浏览器自检</button></div>
+    <div id="live-test-status" class="status">自检在独立实例中执行，保留当前设备状态。</div><div class="card" id="live-tests" hidden></div>
+    <article class="card"><div class="card-title"><h3>源码</h3><select id="source-file" aria-label="源码文件"><option value="device.c">device.c · 控制与协议核心</option><option value="device.h">device.h · 接口与状态定义</option><option value="freertos_app.c">freertos_app.c · 任务工程</option><option value="FreeRTOSConfig.h">FreeRTOSConfig.h · 内核配置</option><option value="tests.c">tests.c · 核心测试</option></select></div><pre id="source-code" class="source-code">正在加载…</pre></article>
+    <details class="card"><summary>主机测试记录</summary><div id="test-table"></div></details>
+    <details class="card"><summary>执行方式与接口范围</summary><p>C核心负责协议解析、缓冲、状态机、保护、存储及升级校验。ADC与执行器输入为逻辑仿真，DMA展示对应双缓冲流程；网页不连接真实MCU。设备接口分离，可在接入板级外设后复用应用逻辑。</p><p>代码与测试提供软件验证记录；FreeRTOS主机端口和浏览器逻辑时间都不替代板端中断与实时性测量。</p></details>
+  </section>
+</main>
+<footer>Bug反馈：<a href="mailto:18662846539@163.com">18662846539@163.com</a></footer>
+<script src="../engineering/charts.js"></script><script src="app.js?v=20261012a"></script>
+</body></html>
