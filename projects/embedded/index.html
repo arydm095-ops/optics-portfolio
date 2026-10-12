@@ -21,15 +21,15 @@
   <div id="status" class="status" role="status" aria-live="polite">C核心加载后可发送指令。</div>
   <section class="panel" id="runtime-panel">
     <div class="workspace"><aside class="card inspector"><h2>设备控制</h2>
-      <div class="button-pair"><button id="start" class="primary">启动设备</button><button id="stop">停止设备</button></div>
+      <div class="button-pair"><button id="start" class="primary">启动驱动</button><button id="stop">停止驱动</button></div>
       <label for="target">目标速度<span>rpm</span></label><input id="target" type="number" min="0" max="2400" step="100" value="800">
       <label for="sample">采样周期<span>ms</span></label><select id="sample"><option value="1">1</option><option value="2">2</option><option value="5" selected>5</option><option value="10">10</option><option value="20">20</option></select>
       <label for="gain">控制比例增益</label><input id="gain" type="range" min="50" max="800" step="25" value="250"><div class="small" id="gain-value">0.250</div>
       <div class="inspector-section"><h3>故障注入</h3><label for="fault">异常工况</label><select id="fault"><option value="1">过流</option><option value="2">母线欠压</option><option value="4">编码器失联</option><option value="8">控制任务停止喂狗</option></select><button id="inject" class="danger">注入异常</button><div class="button-pair"><button id="remove-fault">移除异常</button><button id="ack-fault">确认并复位</button></div><p class="small">异常移除后，故障保持锁存，需发送复位指令。</p></div>
-      <div class="inspector-section"><button id="pause">暂停时间</button><button id="advance">推进100ms</button><button id="export">导出运行记录</button></div>
+      <div class="inspector-section"><button id="pause">暂停仿真</button><button id="advance">推进100ms</button><button id="export">导出运行记录</button></div>
     </aside><div class="results"><div class="metrics" id="metrics"></div>
       <div class="card state-card"><div><span class="eyebrow">设备状态机</span><strong id="mode-label">等待初始化</strong></div><div class="state-path"><span data-mode="0">停止</span><i>→</i><span data-mode="1">运行</span><i>→</i><span data-mode="2">故障锁存</span><i>→</i><span data-mode="3">固件更新</span></div><p id="fault-label">等待输入</p></div>
-      <div class="chart-grid"><article class="card"><h3>ADC采样与DMA块均值</h3><canvas id="adc-chart" aria-label="ADC采集波形"></canvas><p class="small">16点组成一块，完成后切换缓冲区并交给消费任务。</p></article><article class="card"><h3>执行器速度与目标</h3><canvas id="speed-chart" aria-label="执行器速度"></canvas><p class="small">一阶执行器对象，带输出限幅和积分抗饱和。</p></article></div>
+      <div class="chart-grid"><article class="card"><h3>ADC测试信号与DMA块均值</h3><canvas id="adc-chart" aria-label="ADC三角波测试信号"></canvas><p class="small">独立三角波用于检查采样与DMA流程，不代表电机电流；16点组成一块交给消费任务。</p></article><article class="card"><h3>执行器速度与目标</h3><canvas id="speed-chart" aria-label="执行器速度"></canvas><p class="small">一阶执行器对象，带输出限幅和积分抗饱和。</p></article></div>
       <article class="card"><div class="card-title"><h3>DMA双缓冲</h3><span id="dma-label" class="small"></span></div><div id="dma-banks"></div></article>
       <article class="card"><div class="card-title"><h3>事件记录</h3><span class="small">状态切换、协议处理与故障动作</span></div><div class="event-log" id="events"></div></article>
     </div></div>
@@ -58,5 +58,5 @@
   </section>
 </main>
 <footer>Bug反馈：<a href="mailto:18662846539@163.com">18662846539@163.com</a></footer>
-<script src="../engineering/charts.js"></script><script src="app.js?v=20261012a"></script>
+<script src="../engineering/charts.js"></script><script src="app.js?v=20261012b"></script>
 </body></html>

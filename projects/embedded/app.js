@@ -63,7 +63,7 @@
   }
   function figures() {
     if (tab==='runtime' && history.length) {
-      Charts.graph('adc-chart',[{name:'ADC采样',data:history.map(x=>[x.ms/1000,x.adc/1000])},{name:'DMA块均值',data:history.map(x=>[x.ms/1000,x.mean/1000])}],{x:'逻辑时间 / s',y:'电压 / V',ylim:[0,3.3]});
+      Charts.graph('adc-chart',[{name:'三角波测试信号',data:history.map(x=>[x.ms/1000,x.adc/1000])},{name:'DMA块均值',data:history.map(x=>[x.ms/1000,x.mean/1000])}],{x:'逻辑时间 / s',y:'电压 / V',ylim:[0,3.3]});
       Charts.graph('speed-chart',[{name:'目标',dashed:true,data:history.map(x=>[x.ms/1000,x.target])},{name:'速度',data:history.map(x=>[x.ms/1000,x.speed])}],{x:'逻辑时间 / s',y:'速度 / rpm',ylim:[0,2500]});
     }
     if (tab==='tasks') taskFigure();
@@ -175,14 +175,14 @@
   document.querySelectorAll('[data-tab]').forEach(button=>button.onclick=()=>changeTab(button.dataset.tab));
   $('open-source').onclick=()=>changeTab('source');$('source-file').onchange=readSource;
   $('start').onclick=guard(()=>{const code=transact(1,1,1);status(code?replyNames[code]:'启动指令已接受。',!!code);});
-  $('stop').onclick=guard(()=>{transact(1,0,1);status('停止指令已接受。');});
+  $('stop').onclick=guard(()=>{const code=transact(1,0,1);status(code?replyNames[code]:'驱动已关闭，速度逐渐降至0；测试信号采集与任务继续运行。',!!code);});
   let targetTimer;$('target').oninput=()=>{clearTimeout(targetTimer);targetTimer=setTimeout(guard(()=>{const target=checkedInteger($('target'),0,2400);transact(2,target,2);status('目标速度已通过指令帧更新。');}),250);};
   $('sample').onchange=guard(()=>{transact(3,Number($('sample').value),2);status('采样周期已更新，DMA块完成间隔随之改变。');});
   $('gain').oninput=guard(()=>{core.ed_action(2,Number($('gain').value));$('gain-value').textContent=(value(16)/1000).toFixed(3);});
   $('inject').onclick=guard(()=>{core.ed_action(1,Number($('fault').value));core.ed_step(200);collect();render();status('异常已注入，请查看驱动关闭、锁存故障和事件记录。');});
   $('remove-fault').onclick=guard(()=>{core.ed_action(1,0);core.ed_step(20);render();status('异常源已移除，锁存故障仍需确认。');});
   $('ack-fault').onclick=guard(()=>{const code=transact(17,0,0);status(code?replyNames[code]:'复位指令已接受，设备回到停止状态。',!!code);});
-  $('pause').onclick=guard(()=>{paused=!paused;$('pause').textContent=paused?'继续时间':'暂停时间';status(paused?'逻辑时间已暂停，可检查当前缓冲和事件。':'逻辑时间继续推进。');});
+  $('pause').onclick=guard(()=>{paused=!paused;$('pause').textContent=paused?'继续仿真':'暂停仿真';status(paused?'仿真已暂停，曲线、采集与任务时钟停止推进。':'仿真继续运行。');});
   $('advance').onclick=guard(()=>{core.ed_step(100);collect();render();status('已推进100ms。');});
   $('export').onclick=guard(()=>download('设备运行记录.json',JSON.stringify({schema:'embedded-device/v1',backend:'C/WebAssembly',snapshot:Array.from({length:45},(_,i)=>value(i)),history},null,2),'application/json;charset=utf-8'));
   $('make-frame').onclick=guard(makeFrame);
