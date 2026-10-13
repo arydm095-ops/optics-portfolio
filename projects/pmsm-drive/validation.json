@@ -1,0 +1,1106 @@
+{
+  "generatedAt": "2026-10-13T14:32:52.406Z",
+  "native": {
+    "passed": 49,
+    "total": 49,
+    "tests": [
+      {
+        "name": "reset_disabled",
+        "passed": true
+      },
+      {
+        "name": "crc8_sae_j1850_reference",
+        "passed": true
+      },
+      {
+        "name": "speed_step_tracks_3000rpm",
+        "passed": true
+      },
+      {
+        "name": "dq_current_follows_reference",
+        "passed": true
+      },
+      {
+        "name": "multi_rate_counters",
+        "passed": true
+      },
+      {
+        "name": "svpwm_duty_bounds",
+        "passed": true
+      },
+      {
+        "name": "current_vector_limit",
+        "passed": true
+      },
+      {
+        "name": "load_step_speed_recovery",
+        "passed": true
+      },
+      {
+        "name": "load_step_torque_balance",
+        "passed": true
+      },
+      {
+        "name": "ipmsm_mtpa_reduces_current",
+        "passed": true
+      },
+      {
+        "name": "mtpa_preserves_requested_torque",
+        "passed": true
+      },
+      {
+        "name": "mtpa_matches_independent_numeric_search",
+        "passed": true
+      },
+      {
+        "name": "spmsm_mtpa_falls_back_to_id_zero",
+        "passed": true
+      },
+      {
+        "name": "weakening_reaches_above_base_speed",
+        "passed": true
+      },
+      {
+        "name": "weakening_voltage_limit",
+        "passed": true
+      },
+      {
+        "name": "servo_position_tracks_one_revolution",
+        "passed": true
+      },
+      {
+        "name": "position_task_runs_at_1khz",
+        "passed": true
+      },
+      {
+        "name": "s_curve_ends_with_zero_velocity_acceleration",
+        "passed": true
+      },
+      {
+        "name": "stop_removes_pwm_output",
+        "passed": true
+      },
+      {
+        "name": "overcurrent_fast_trip",
+        "passed": true
+      },
+      {
+        "name": "fault_reset_blocked_while_injected",
+        "passed": true
+      },
+      {
+        "name": "fault_latched_after_condition_removed",
+        "passed": true
+      },
+      {
+        "name": "fault_reset_requires_explicit_reenable",
+        "passed": true
+      },
+      {
+        "name": "undervoltage_trip",
+        "passed": true
+      },
+      {
+        "name": "fault_reset_blocked_while_injected",
+        "passed": true
+      },
+      {
+        "name": "fault_latched_after_condition_removed",
+        "passed": true
+      },
+      {
+        "name": "fault_reset_requires_explicit_reenable",
+        "passed": true
+      },
+      {
+        "name": "encoder_loss_trip",
+        "passed": true
+      },
+      {
+        "name": "fault_reset_blocked_while_injected",
+        "passed": true
+      },
+      {
+        "name": "fault_latched_after_condition_removed",
+        "passed": true
+      },
+      {
+        "name": "fault_reset_requires_explicit_reenable",
+        "passed": true
+      },
+      {
+        "name": "communication_timeout_trip",
+        "passed": true
+      },
+      {
+        "name": "fault_reset_blocked_while_injected",
+        "passed": true
+      },
+      {
+        "name": "fault_latched_after_condition_removed",
+        "passed": true
+      },
+      {
+        "name": "fault_reset_requires_explicit_reenable",
+        "passed": true
+      },
+      {
+        "name": "deadline_fault_trip",
+        "passed": true
+      },
+      {
+        "name": "fault_reset_blocked_while_injected",
+        "passed": true
+      },
+      {
+        "name": "fault_latched_after_condition_removed",
+        "passed": true
+      },
+      {
+        "name": "fault_reset_requires_explicit_reenable",
+        "passed": true
+      },
+      {
+        "name": "can_enable",
+        "passed": true
+      },
+      {
+        "name": "can_target_signed_scale",
+        "passed": true
+      },
+      {
+        "name": "can_duplicate_counter_rejected",
+        "passed": true
+      },
+      {
+        "name": "can_corrupt_crc_rejected",
+        "passed": true
+      },
+      {
+        "name": "can_negative_target_accepted",
+        "passed": true
+      },
+      {
+        "name": "can_wrong_id_dlc_rejected",
+        "passed": true
+      },
+      {
+        "name": "calibration_bounds_rejected",
+        "passed": true
+      },
+      {
+        "name": "calibration_adc_headroom",
+        "passed": true
+      },
+      {
+        "name": "calibration_electrical_time_constant",
+        "passed": true
+      },
+      {
+        "name": "real_can_deadline_expires",
+        "passed": true
+      }
+    ],
+    "snapshot": [
+      1.8,
+      1,
+      0,
+      0,
+      2399.97195816,
+      2400,
+      25606.5226889,
+      0,
+      -0.481549790632,
+      10.2644172047,
+      -0.496347032381,
+      10.2820282414,
+      5.25167069442,
+      5,
+      -8.34445898441,
+      86.5522304768,
+      300,
+      0.534070758638,
+      1.05520273571,
+      -9.37957987298,
+      8.32437713727,
+      0.565874682259,
+      0.251884777342,
+      0.748115222658,
+      16676,
+      36000,
+      3600,
+      0,
+      1800,
+      0,
+      0,
+      0,
+      0,
+      0,
+      5.25608269322,
+      -0.496347032381,
+      0,
+      -0.508744369985,
+      2066,
+      1888,
+      10.2727995001,
+      80,
+      0.006,
+      0.0004,
+      0.0008,
+      0.085,
+      300,
+      25,
+      800,
+      0.12,
+      0,
+      0
+    ]
+  },
+  "checks": [
+    {
+      "name": "GCC / WebAssembly 52字段一致性",
+      "passed": true,
+      "error": 5.2018094720551744e-8,
+      "tolerance": 0.00001
+    },
+    {
+      "name": "dq电机对象与独立RK4参考 / id",
+      "passed": true,
+      "error": 5.034686623162088e-8,
+      "tolerance": 0.001
+    },
+    {
+      "name": "dq电机对象与独立RK4参考 / iq",
+      "passed": true,
+      "error": 2.9065238216219313e-8,
+      "tolerance": 0.001
+    },
+    {
+      "name": "dq电机对象与独立RK4参考 / omega",
+      "passed": true,
+      "error": 1.0552962947940614e-8,
+      "tolerance": 0.001
+    },
+    {
+      "name": "dq电机对象与独立RK4参考 / theta",
+      "passed": true,
+      "error": 6.195675217313124e-8,
+      "tolerance": 0.001
+    },
+    {
+      "name": "step / 数值有限",
+      "passed": true,
+      "error": 0,
+      "tolerance": 0
+    },
+    {
+      "name": "step / 电压约束",
+      "passed": true,
+      "error": 0,
+      "tolerance": 1e-12
+    },
+    {
+      "name": "step / 无意外故障",
+      "passed": true,
+      "error": 0,
+      "tolerance": 0
+    },
+    {
+      "name": "position / 数值有限",
+      "passed": true,
+      "error": 0,
+      "tolerance": 0
+    },
+    {
+      "name": "position / 电压约束",
+      "passed": true,
+      "error": 0,
+      "tolerance": 1e-12
+    },
+    {
+      "name": "position / 无意外故障",
+      "passed": true,
+      "error": 0,
+      "tolerance": 0
+    },
+    {
+      "name": "weakening / 数值有限",
+      "passed": true,
+      "error": 0,
+      "tolerance": 0
+    },
+    {
+      "name": "weakening / 电压约束",
+      "passed": true,
+      "error": 4.440892098500626e-16,
+      "tolerance": 1e-12
+    },
+    {
+      "name": "weakening / 无意外故障",
+      "passed": true,
+      "error": 0,
+      "tolerance": 0
+    },
+    {
+      "name": "reversal / 数值有限",
+      "passed": true,
+      "error": 0,
+      "tolerance": 0
+    },
+    {
+      "name": "reversal / 电压约束",
+      "passed": true,
+      "error": 0,
+      "tolerance": 1e-12
+    },
+    {
+      "name": "reversal / 无意外故障",
+      "passed": true,
+      "error": 0,
+      "tolerance": 0
+    },
+    {
+      "name": "torque / 数值有限",
+      "passed": true,
+      "error": 0,
+      "tolerance": 0
+    },
+    {
+      "name": "torque / 电压约束",
+      "passed": true,
+      "error": 0,
+      "tolerance": 1e-12
+    },
+    {
+      "name": "torque / 无意外故障",
+      "passed": true,
+      "error": 0,
+      "tolerance": 0
+    },
+    {
+      "name": "fault / 数值有限",
+      "passed": true,
+      "error": 0,
+      "tolerance": 0
+    },
+    {
+      "name": "fault / 电压约束",
+      "passed": true,
+      "error": 0,
+      "tolerance": 1e-12
+    },
+    {
+      "name": "弱磁升速跟踪误差 / rpm",
+      "passed": true,
+      "error": 0.009374074555125844,
+      "tolerance": 20
+    },
+    {
+      "name": "弱磁开启后转速更高",
+      "passed": true,
+      "error": 0,
+      "tolerance": 0
+    },
+    {
+      "name": "伺服定位最终误差 / degree",
+      "passed": true,
+      "error": 0.0007049600115465182,
+      "tolerance": 0.15
+    },
+    {
+      "name": "轨迹前馈降低位置跟踪RMS",
+      "passed": true,
+      "error": 0,
+      "tolerance": 0
+    }
+  ],
+  "passed": 26,
+  "total": 26,
+  "numericCrosscheck": {
+    "reference": [
+      13.591294456458657,
+      6.3481648649847715,
+      31.06554458217319,
+      2.937743289971767
+    ],
+    "c": [
+      13.591294506805523,
+      6.34816489405001,
+      31.06554459272615,
+      2.937743351928519
+    ],
+    "error": [
+      5.034686623162088e-8,
+      2.9065238216219313e-8,
+      1.0552962947940614e-8,
+      6.195675217313124e-8
+    ],
+    "method": "RK4 reference vs C midpoint integration",
+    "duration": 0.1,
+    "dt": 0.0000125
+  },
+  "crossRuntime": {
+    "native": [
+      1.8,
+      1,
+      0,
+      0,
+      2399.97195816,
+      2400,
+      25606.5226889,
+      0,
+      -0.481549790632,
+      10.2644172047,
+      -0.496347032381,
+      10.2820282414,
+      5.25167069442,
+      5,
+      -8.34445898441,
+      86.5522304768,
+      300,
+      0.534070758638,
+      1.05520273571,
+      -9.37957987298,
+      8.32437713727,
+      0.565874682259,
+      0.251884777342,
+      0.748115222658,
+      16676,
+      36000,
+      3600,
+      0,
+      1800,
+      0,
+      0,
+      0,
+      0,
+      0,
+      5.25608269322,
+      -0.496347032381,
+      0,
+      -0.508744369985,
+      2066,
+      1888,
+      10.2727995001,
+      80,
+      0.006,
+      0.0004,
+      0.0008,
+      0.085,
+      300,
+      25,
+      800,
+      0.12,
+      0,
+      0
+    ],
+    "wasm": [
+      1.8,
+      1,
+      0,
+      0,
+      2399.971958107982,
+      2400,
+      25606.522688941364,
+      0,
+      -0.48154979063228764,
+      10.26441720473982,
+      -0.49634703237867034,
+      10.282028241403367,
+      5.251670691686711,
+      5,
+      -8.344458982910893,
+      86.55223046119201,
+      300,
+      0.5340707585415979,
+      1.0552027357107963,
+      -9.379579872984856,
+      8.324377137274059,
+      0.5658746822476185,
+      0.25188477738700066,
+      0.7481152226129993,
+      16676,
+      36000,
+      3600,
+      0,
+      1800,
+      0,
+      0,
+      0,
+      0,
+      0,
+      5.256082693206408,
+      -0.49634703237867034,
+      0,
+      -0.5087444063094264,
+      2066,
+      1888,
+      10.272799492973839,
+      80,
+      0.006,
+      0.0004,
+      0.0008,
+      0.085,
+      300,
+      25,
+      800,
+      0.12,
+      0,
+      0
+    ],
+    "maxError": 5.2018094720551744e-8
+  },
+  "scenarios": {
+    "step": {
+      "scenario": {
+        "name": "速度与负载阶跃",
+        "profile": 0,
+        "mode": 0,
+        "target": 3000,
+        "load": 8,
+        "duration": 2.4,
+        "step": 0.1,
+        "loadAt": 0.9,
+        "description": "0.1s给定转速阶跃，0.9s施加阻力矩；观察动态响应与负载恢复。"
+      },
+      "metrics": {
+        "overshoot": 0.21089192018912398,
+        "steadyError": 0.021174194066134078,
+        "trackingRms": 7949.478855917388,
+        "peakCurrent": 75.77624629187493,
+        "maxVoltageUse": 0.7228890853043067,
+        "faultLatency": null,
+        "samples": 2762,
+        "settledSamples": 1461
+      },
+      "final": {
+        "time": 2.4,
+        "enabled": 1,
+        "mode": 0,
+        "fault": 0,
+        "rpm": 3000.021174194066,
+        "rpmRef": 3000,
+        "position": 40969.73917561535,
+        "positionRef": 0,
+        "id": -1.262781164956336,
+        "iq": 16.211320022623443,
+        "idRef": -1.2294917753758945,
+        "iqRef": 16.210448861555168,
+        "torque": 8.313824368312549,
+        "load": 8,
+        "vd": -16.377857755568865,
+        "vq": 108.11797667995393,
+        "bus": 300,
+        "voltageUse": 0.6716390066545217,
+        "ia": -16.00390815828041,
+        "ib": 10.493404982901808,
+        "ic": 5.510503175378602,
+        "dutyA": 0.2115513301136241,
+        "dutyB": 0.788448669886376,
+        "dutyC": 0.722115672956816,
+        "encoder": 105163,
+        "fastCalls": 48000,
+        "speedCalls": 4800,
+        "positionCalls": 0,
+        "managementCalls": 2400,
+        "canFrames": 0,
+        "crcErrors": 0,
+        "sequenceErrors": 0,
+        "rejected": 0,
+        "faultTime": 0,
+        "torqueRef": 8.315162391914177,
+        "mtpaId": -1.2294917753758945,
+        "fwId": 0,
+        "actualId": -1.2183255575034908,
+        "adcA": 1775,
+        "adcB": 2227,
+        "actualIq": 16.20868719498197,
+        "currentLimit": 80,
+        "inertia": 0.006,
+        "ld": 0.0004,
+        "lq": 0.0008,
+        "flux": 0.085,
+        "busRated": 300,
+        "speedBandwidth": 25,
+        "currentBandwidth": 800,
+        "rs": 0.12,
+        "trajectoryVelocity": 0,
+        "trajectoryAcceleration": 0
+      },
+      "events": [
+        {
+          "time": 0.1,
+          "action": "目标给定",
+          "value": 3000
+        },
+        {
+          "time": 0.9,
+          "action": "加载阻力矩",
+          "value": 8
+        }
+      ]
+    },
+    "position": {
+      "scenario": {
+        "name": "伺服定位",
+        "profile": 1,
+        "mode": 2,
+        "target": 360,
+        "load": 0,
+        "duration": 1.8,
+        "step": 0.1,
+        "loadAt": 0.9,
+        "description": "48V伺服轴执行五次多项式轨迹，位置、速度和电流环按不同周期运行。"
+      },
+      "metrics": {
+        "overshoot": 0.0007020146027040634,
+        "steadyError": 0.0007049600115465182,
+        "trackingRms": 0.5396642815611558,
+        "peakCurrent": 0.05901189592786125,
+        "maxVoltageUse": 0.057802311822234644,
+        "faultLatency": null,
+        "samples": 2162,
+        "settledSamples": 861
+      },
+      "final": {
+        "time": 1.8,
+        "enabled": 1,
+        "mode": 2,
+        "fault": 0,
+        "rpm": -0.0005311505775138105,
+        "rpmRef": 0,
+        "position": 360.00070496001155,
+        "positionRef": 360,
+        "id": -6.631833441953497e-18,
+        "iq": 0.006769128705691753,
+        "idRef": 0,
+        "iqRef": 0.0026454891464809506,
+        "torque": 0.00039001242661193026,
+        "load": 0,
+        "vd": -0.0004282947148850397,
+        "vq": -0.016769680690156122,
+        "bus": 48,
+        "voltageUse": 0.0006439585664710754,
+        "ia": 0,
+        "ib": 0.005862237420615535,
+        "ic": -0.005862237420615535,
+        "dutyA": 0.49998661579015985,
+        "dutyB": 0.4996974381356036,
+        "dutyC": 0.5003025618643965,
+        "encoder": 0,
+        "fastCalls": 36000,
+        "speedCalls": 3600,
+        "positionCalls": 1800,
+        "managementCalls": 1800,
+        "canFrames": 0,
+        "crcErrors": 0,
+        "sequenceErrors": 0,
+        "rejected": 0,
+        "faultTime": 0,
+        "torqueRef": 0.0003968233719721427,
+        "mtpaId": 0,
+        "fwId": 0,
+        "actualId": -0.0007780009722508218,
+        "adcA": 2048,
+        "adcB": 2049,
+        "actualIq": 0.0026000828440795347,
+        "currentLimit": 8,
+        "inertia": 0.00012,
+        "ld": 0.0012,
+        "lq": 0.0012,
+        "flux": 0.025,
+        "busRated": 48,
+        "speedBandwidth": 35,
+        "currentBandwidth": 600,
+        "rs": 0.55,
+        "trajectoryVelocity": 0,
+        "trajectoryAcceleration": 0
+      },
+      "events": [
+        {
+          "time": 0.1,
+          "action": "目标给定",
+          "value": 360
+        }
+      ]
+    },
+    "weakening": {
+      "scenario": {
+        "name": "基速以上升速",
+        "profile": 0,
+        "mode": 0,
+        "target": 6500,
+        "load": 3,
+        "duration": 3,
+        "step": 0.1,
+        "loadAt": 0.1,
+        "description": "提高目标转速，观察负d轴弱磁、电压利用率与电流圆约束。"
+      },
+      "metrics": {
+        "overshoot": 0.9452074945272007,
+        "steadyError": 0.009374074555125844,
+        "trackingRms": 15646.471023109762,
+        "peakCurrent": 75.792208414508,
+        "maxVoltageUse": 1.0000000000000004,
+        "faultLatency": null,
+        "samples": 3362,
+        "settledSamples": 2861
+      },
+      "final": {
+        "time": 3,
+        "enabled": 1,
+        "mode": 0,
+        "fault": 0,
+        "rpm": 6500.009374074555,
+        "rpmRef": 6500,
+        "position": 110287.78217278355,
+        "positionRef": 0,
+        "id": -64.71097081630745,
+        "iq": 5.532766042641082,
+        "idRef": -66.01393294035846,
+        "iqRef": 16.008802054955197,
+        "torque": 3.6633738661981177,
+        "load": 3,
+        "vd": -19.844961360891887,
+        "vq": 161.59881654450538,
+        "bus": 300,
+        "voltageUse": 0.9999999999999998,
+        "ia": 48.597948216902786,
+        "ib": -61.61211529066927,
+        "ic": 13.014167073766487,
+        "dutyA": 0.09701958286907791,
+        "dutyB": 0.09162648493934389,
+        "dutyC": 0.9083735150606561,
+        "encoder": 45814,
+        "fastCalls": 60000,
+        "speedCalls": 6000,
+        "positionCalls": 0,
+        "managementCalls": 3000,
+        "canFrames": 0,
+        "crcErrors": 0,
+        "sequenceErrors": 0,
+        "rejected": 0,
+        "faultTime": 0,
+        "torqueRef": 10.700818612774233,
+        "mtpaId": -2.013932940358454,
+        "fwId": -64,
+        "actualId": -64.73015700743517,
+        "adcA": 2877,
+        "adcB": 997,
+        "actualIq": 5.505915352281143,
+        "currentLimit": 80,
+        "inertia": 0.006,
+        "ld": 0.0004,
+        "lq": 0.0008,
+        "flux": 0.085,
+        "busRated": 300,
+        "speedBandwidth": 25,
+        "currentBandwidth": 800,
+        "rs": 0.12,
+        "trajectoryVelocity": 0,
+        "trajectoryAcceleration": 0
+      },
+      "events": [
+        {
+          "time": 0.1,
+          "action": "目标给定",
+          "value": 6500
+        },
+        {
+          "time": 0.1,
+          "action": "加载阻力矩",
+          "value": 3
+        }
+      ]
+    },
+    "reversal": {
+      "scenario": {
+        "name": "正反转切换",
+        "profile": 0,
+        "mode": 0,
+        "target": 2000,
+        "load": 2,
+        "duration": 2.6,
+        "step": 0.1,
+        "reverseAt": 1.3,
+        "loadAt": 0.1,
+        "description": "从正转切换为反转，观察制动转矩、反向电流和速度环积分状态。"
+      },
+      "metrics": {
+        "overshoot": 0.2377049258995612,
+        "steadyError": 0.047663782626159445,
+        "trackingRms": 5370.224641049253,
+        "peakCurrent": 75.80324087150602,
+        "maxVoltageUse": 0.4796199954857505,
+        "faultLatency": null,
+        "samples": 2962,
+        "settledSamples": 1261
+      },
+      "final": {
+        "time": 2.6,
+        "enabled": 1,
+        "mode": 0,
+        "fault": 0,
+        "rpm": -2000.047663782626,
+        "rpmRef": -1999.9999999999998,
+        "position": -671.2340015759147,
+        "positionRef": 0,
+        "id": -0.07534591556641557,
+        "iq": -4.340569413740804,
+        "idRef": -0.08959512704865766,
+        "iqRef": -4.3642859421249875,
+        "torque": -2.222568314929221,
+        "load": 2,
+        "vd": -2.9500836058433677,
+        "vq": -71.7938656903123,
+        "bus": 300,
+        "voltageUse": 0.44133177329477824,
+        "ia": -1.2310698583292623,
+        "ib": 4.220810942843185,
+        "ic": -2.9897410845139225,
+        "dutyA": 0.40631567954743303,
+        "dutyB": 0.7002496789030654,
+        "dutyC": 0.29975032109693456,
+        "encoder": 17974,
+        "fastCalls": 52000,
+        "speedCalls": 5200,
+        "positionCalls": 0,
+        "managementCalls": 2600,
+        "canFrames": 0,
+        "crcErrors": 0,
+        "sequenceErrors": 0,
+        "rejected": 0,
+        "faultTime": 0,
+        "torqueRef": -2.2267242754920504,
+        "mtpaId": -0.08959512704865766,
+        "fwId": 0,
+        "actualId": -0.10424082965076555,
+        "adcA": 2027,
+        "adcB": 2120,
+        "actualIq": -4.355840352039462,
+        "currentLimit": 80,
+        "inertia": 0.006,
+        "ld": 0.0004,
+        "lq": 0.0008,
+        "flux": 0.085,
+        "busRated": 300,
+        "speedBandwidth": 25,
+        "currentBandwidth": 800,
+        "rs": 0.12,
+        "trajectoryVelocity": 0,
+        "trajectoryAcceleration": 0
+      },
+      "events": [
+        {
+          "time": 0.1,
+          "action": "目标给定",
+          "value": 2000
+        },
+        {
+          "time": 0.1,
+          "action": "加载阻力矩",
+          "value": 2
+        },
+        {
+          "time": 1.3,
+          "action": "反向给定",
+          "value": -2000
+        }
+      ]
+    },
+    "torque": {
+      "scenario": {
+        "name": "转矩控制",
+        "profile": 0,
+        "mode": 1,
+        "target": 12,
+        "load": 10,
+        "duration": 1.8,
+        "step": 0.1,
+        "loadAt": 0.1,
+        "description": "在转矩模式下跟踪转矩给定；速度由净转矩、惯量和阻力共同决定。"
+      },
+      "metrics": {
+        "overshoot": 0.10755946925498823,
+        "steadyError": 0.003995162152328646,
+        "trackingRms": 2645.107839799602,
+        "peakCurrent": 37.33547286299506,
+        "maxVoltageUse": 0.9252486138504193,
+        "faultLatency": null,
+        "samples": 2162,
+        "settledSamples": 1661
+      },
+      "final": {
+        "time": 1.8,
+        "enabled": 1,
+        "mode": 1,
+        "fault": 0,
+        "rpm": 4714.475088853434,
+        "rpmRef": 0,
+        "position": 25192.88275866874,
+        "positionRef": 0,
+        "id": -31.1696222160695,
+        "iq": 20.498604143846094,
+        "idRef": -31.195602282557342,
+        "iqRef": 20.517399383361287,
+        "torque": 12.003995162152329,
+        "load": 10,
+        "vd": -36.17547367538152,
+        "vq": 145.7754088501212,
+        "bus": 300,
+        "voltageUse": 0.9225135162185637,
+        "ia": -14.303859306301906,
+        "ib": 36.990718124084026,
+        "ic": -22.68685881778212,
+        "dutyA": 0.7591490712358331,
+        "dutyB": 0.9069480420987674,
+        "dutyC": 0.09305195790123255,
+        "encoder": 127966,
+        "fastCalls": 36000,
+        "speedCalls": 0,
+        "positionCalls": 0,
+        "managementCalls": 1800,
+        "canFrames": 0,
+        "crcErrors": 0,
+        "sequenceErrors": 0,
+        "rejected": 0,
+        "faultTime": 0,
+        "torqueRef": 12,
+        "mtpaId": -2.514976188357845,
+        "fwId": -28.680626094199496,
+        "actualId": -31.17450078163653,
+        "adcA": 1804,
+        "adcB": 2679,
+        "actualIq": 20.526007583283953,
+        "currentLimit": 80,
+        "inertia": 0.006,
+        "ld": 0.0004,
+        "lq": 0.0008,
+        "flux": 0.085,
+        "busRated": 300,
+        "speedBandwidth": 25,
+        "currentBandwidth": 800,
+        "rs": 0.12,
+        "trajectoryVelocity": 0,
+        "trajectoryAcceleration": 0
+      },
+      "events": [
+        {
+          "time": 0.1,
+          "action": "目标给定",
+          "value": 12
+        },
+        {
+          "time": 0.1,
+          "action": "加载阻力矩",
+          "value": 10
+        }
+      ]
+    },
+    "fault": {
+      "scenario": {
+        "name": "故障关断",
+        "profile": 0,
+        "mode": 0,
+        "target": 2400,
+        "load": 3,
+        "duration": 1.7,
+        "step": 0.1,
+        "loadAt": 0.1,
+        "faultAt": 1,
+        "description": "运行期间注入异常；记录故障锁存时刻与PWM关闭后的电机状态。"
+      },
+      "metrics": {
+        "overshoot": 0.17272299863697071,
+        "steadyError": 2400,
+        "trackingRms": 6397.796645469944,
+        "peakCurrent": 75.77470431786176,
+        "maxVoltageUse": 0.5747774579458519,
+        "faultLatency": 0,
+        "samples": 2062,
+        "settledSamples": 500
+      },
+      "final": {
+        "time": 1.7000000000000002,
+        "enabled": 0,
+        "mode": 0,
+        "fault": 1,
+        "rpm": 5.5403089183170276e-46,
+        "rpmRef": 2400,
+        "position": 16187.757616247622,
+        "positionRef": 0,
+        "id": 0,
+        "iq": 0,
+        "idRef": -0.19332944888513295,
+        "iqRef": 6.412478784674176,
+        "torque": 8.181115264102524e-46,
+        "load": 3,
+        "vd": 0,
+        "vq": 0,
+        "bus": 300,
+        "voltageUse": 0,
+        "ia": 0,
+        "ib": 0,
+        "ic": 0,
+        "dutyA": 0,
+        "dutyB": 0,
+        "dutyC": 0,
+        "encoder": 126615,
+        "fastCalls": 34000,
+        "speedCalls": 2000,
+        "positionCalls": 0,
+        "managementCalls": 1700,
+        "canFrames": 0,
+        "crcErrors": 0,
+        "sequenceErrors": 0,
+        "rejected": 0,
+        "faultTime": 1,
+        "torqueRef": 3.273339510558459,
+        "mtpaId": -0.19332944888513295,
+        "fwId": 0,
+        "actualId": -1.2219328897226943e-92,
+        "adcA": 2048,
+        "adcB": 2048,
+        "actualIq": 1.6041402478632398e-45,
+        "currentLimit": 80,
+        "inertia": 0.006,
+        "ld": 0.0004,
+        "lq": 0.0008,
+        "flux": 0.085,
+        "busRated": 300,
+        "speedBandwidth": 25,
+        "currentBandwidth": 800,
+        "rs": 0.12,
+        "trajectoryVelocity": 0,
+        "trajectoryAcceleration": 0
+      },
+      "events": [
+        {
+          "time": 0.1,
+          "action": "目标给定",
+          "value": 2400
+        },
+        {
+          "time": 0.1,
+          "action": "加载阻力矩",
+          "value": 3
+        },
+        {
+          "time": 1,
+          "action": "注入异常",
+          "value": 1
+        }
+      ]
+    }
+  },
+  "comparison": {
+    "weakening": {
+      "enabled": 6500.009374074555,
+      "disabled": 4768.780468878028
+    },
+    "positionFeedforward": {
+      "enabled": 0.5396642815611558,
+      "disabled": 14.703789167146585
+    }
+  }
+}
