@@ -6,6 +6,16 @@
 
 入口 `index.html`。拖动 3D 图旋转，滚轮缩放；改变吸热功率、材料导热率、dn/dT、探测腰斑、M²、传播距离后自动更新计算，也可点击计算按钮。
 
+“光学介质”提供熔石英（HPFS 7980）、N-BK7和氟化钙预置。切换介质会同时更新导热率、dn/dT、温度场、OPD和光束传播，保留当前吸热功率、尺寸与补偿镜。手动改导热率或dn/dT后转为“自定义介质”；选择自定义不会覆盖当前数值。导出数据与报告保留介质名称及参考来源。
+
+| 介质 | k / W/(m·K) | dn/dT / 10⁻⁶/K | 参考条件 |
+| --- | ---: | ---: | --- |
+| Corning HPFS 7980熔石英 | 1.38 | 9.598 | k：25°C；dn/dT：1064nm、20–25°C，按厂家多项式计算并取三位小数 |
+| SCHOTT N-BK7 | 1.114 | 1.1 | 绝对折射率温度系数，1060nm、20–40°C |
+| Crystran CaF₂ | 9.71 | −10.6 | 供应商代表值，原表未注明dn/dT参考波长和温度 |
+
+物性按参考常数使用，不随当前波长或温度自动换算，也不以材料名称推定吸收率。其他波长或高温工况可用“自定义介质”输入对应物性。N-BK7没有使用空气相对折射率的2.4×10⁻⁶/K。CaF₂的负dn/dT会产生负光焦度，这不等于忽略膨胀和应力之后的实际镜片总热透镜效应。
+
 推荐先看默认工况，再将吸热功率置零对比，最后恢复参数并点击“抵消热透镜”。注意热透镜使光束先会聚后发散，不能根据某个近处光斑变小就判断远场发散改善。
 
 ```sh
@@ -13,6 +23,7 @@
 python -m http.server 8000
 # 打开 http://localhost:8000/projects/laser-thermal/
 node projects/laser-thermal/tests.cjs
+node projects/laser-thermal/materials-tests.cjs
 ```
 
 导出 JSON 包含工况、温度、OPD、传播曲线和验证数据。HTML 报告包含当前 3D 图与曲线，可打印为 PDF。3D 绘图使用本仓库的 Three.js，许可证见 `../../demos/vendor/LICENSE-three.txt`。
@@ -69,18 +80,22 @@ w²(z) = λ_eff / [−π Im(1/q(z))]
 
 ## 默认工况与验证
 
-熔石英参数示例：k=1.38 W/(m·K)，dn/dT=9×10⁻⁶/K（代表值）。P=1.5 W，w_p=1 mm，R=5 mm，L=5 mm，圆周 25°C；探测束 1064 nm、w0=0.35 mm、M²=1；介质位置 0.15 m，观察面 3 m。
+默认HPFS 7980熔石英：k=1.38 W/(m·K)，dn/dT=9.598×10⁻⁶/K。P=1.5 W，w_p=1 mm，R=5 mm，L=5 mm，圆周 25°C；探测束 1064 nm、w0=0.35 mm、M²=1；介质位置 0.15 m，观察面 3 m。
 
 - 120 控制体轴心温度约 102.705°C，独立积分参考约 102.661°C。
-- 热透镜焦距约 0.32114 m。
-- 冷态/热态远场发散半角约 0.96766 / 1.20571 mrad。
-- 3 m 观察面光束半径约 2.92401 / 3.19435 mm。
+- 热透镜焦距约 0.30113 m。
+- 冷态/热态远场发散半角约 0.96766 / 1.25966 mrad。
+- 3 m 观察面光束半径约 2.92401 / 3.33392 mm。
 
 15 项自动检查覆盖热功率分配、全局能量平衡、积分解析参考、零吸热、功率/导热率线性、Rayleigh 长度、自由 Gaussian 传播、发散角、同面补偿、q 变换可逆性、dn/dT 符号及网格收敛。完整结果在 `validation.json`。
+
+介质检查另覆盖三种预置的解析温度、能量守恒、零吸热和补偿工况，以及CaF₂的负焦距、OPD符号、自定义参数保留。页面下方网格收敛表固定显示默认工况基准；切换介质不改写该验证记录。
 
 ## 资料
 
 - [Corning HPFS 材料参数手册](https://www.corning.com/content/dam/corning/media/worldwide/csm/documents/HPFS_Product_Brochure_All_Grades_2022_6.pdf)
+- [SCHOTT N-BK7 数据表](https://media.schott.com/api/public/content/41e799d0bf874807a0bb8e702fbb75b5?v=54856406)
+- [Crystran CaF₂ 数据表](https://www.crystran.co.uk/optical-materials/calcium-fluoride-caf2/)
 - [NBS：熔石英温度相关折射率研究](https://pmc.ncbi.nlm.nih.gov/articles/PMC6715984/)
 - [Thorlabs：Gaussian 光束传播、腰斑和 Rayleigh 长度](https://www.thorlabs.com/newgrouppage9.cfm?objectgroup_id=12211&tabname=Optical+Isolators)
 - [Gaussian 热透镜研究](https://pmc.ncbi.nlm.nih.gov/articles/PMC8509296/)

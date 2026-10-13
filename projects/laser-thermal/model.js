@@ -1,7 +1,7 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.ThermalOptics=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
 'use strict';
 // SI internally. Inputs use mm for material/waist, m for propagation, nm for wavelength.
-const defaults={absorbed:1.5,pumpRadius:1,rodRadius:5,length:5,conductivity:1.38,dndT:9,coolant:25,wavelength:1064,waist:.35,m2:1,lensZ:.15,screenZ:3,compensator:0,cells:120};
+const defaults={absorbed:1.5,pumpRadius:1,rodRadius:5,length:5,conductivity:1.38,dndT:9.598,coolant:25,wavelength:1064,waist:.35,m2:1,lensZ:.15,screenZ:3,compensator:0,cells:120};
 function validate(p){for(const k of Object.keys(defaults))if(!Number.isFinite(p[k]))throw Error('请填写有限数值参数');if(p.absorbed<0||p.pumpRadius<=0||p.rodRadius<=p.pumpRadius||p.length<=0||p.conductivity<=0||p.waist<=0||p.m2<1||p.wavelength<=0||p.lensZ<0||p.screenZ<=p.lensZ||p.cells<20||p.cells>400)throw Error('请检查功率、材料尺寸、光束和传播距离');if(p.compensator!==0&&Math.abs(p.compensator)<.01)throw Error('补偿镜焦距绝对值须 ≥ 0.01 m；0 表示无补偿');}
 function solveTridiagonal(a,b,c,d){b=b.slice();d=d.slice();for(let i=1;i<b.length;i++){const f=a[i]/b[i-1];b[i]-=f*c[i-1];d[i]-=f*d[i-1];}const x=Array(b.length);x[b.length-1]=d[b.length-1]/b[b.length-1];for(let i=b.length-2;i>=0;i--)x[i]=(d[i]-c[i]*x[i+1])/b[i];return x;}
 function heat(p){validate(p);const n=Math.round(p.cells),R=p.rodRadius/1000,L=p.length/1000,wp=p.pumpRadius/1000,dr=R/n,norm=1-Math.exp(-2*R*R/(wp*wp)),k=p.conductivity;

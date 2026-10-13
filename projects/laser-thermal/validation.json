@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-11T14:45:17.855Z",
+  "generatedAt": "2026-10-13T12:34:46.296Z",
   "passed": 15,
   "total": 15,
   "tests": [
@@ -122,8 +122,8 @@
     },
     {
       "name": "dn/dT 符号 / 发散热透镜",
-      "actual": -3.113901060493605,
-      "expected": -3.113901060493605,
+      "actual": -3.3208024865130694,
+      "expected": -3.3208024865130694,
       "error": 0,
       "tolerance": 1e-12,
       "relative": false,
@@ -169,7 +169,7 @@
       "rodRadius": 5,
       "length": 5,
       "conductivity": 1.38,
-      "dndT": 9,
+      "dndT": 9.598,
       "coolant": 25,
       "wavelength": 1064,
       "waist": 0.35,
@@ -180,11 +180,11 @@
       "cells": 120
     },
     "peakC": 102.70474695060086,
-    "thermalFocalM": 0.3211405823669566,
+    "thermalFocalM": 0.30113203180898196,
     "inputDivergenceMrad": 0.9676620539987237,
-    "hotDivergenceMrad": 1.2057088808441478,
+    "hotDivergenceMrad": 1.259663692567465,
     "coldScreenRadiusMm": 2.924009004216858,
-    "hotScreenRadiusMm": 3.1943528547782294,
-    "residualRmsWaves": 0.014309713572304228
+    "hotScreenRadiusMm": 3.333919474380826,
+    "residualRmsWaves": 0.015260514540775117
   }
 }
