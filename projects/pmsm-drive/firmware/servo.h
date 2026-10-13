@@ -5,6 +5,8 @@ typedef unsigned int sv_u32;
 typedef struct  {
     double rs, ld, lq, flux, inertia, friction, bus, imax, adc_range;
     double current_bw, speed_bw, position_kp;
+    double gains[6];
+    sv_u32 manual_gains;
     sv_u32 pole_pairs, encoder_lines;
 }
 SvParams;
@@ -35,6 +37,7 @@ void sv_defaults(SvParams *p,sv_u32 profile);
 void sv_plant_step(SvPlant *m,const SvParams *p,double vd,double vq,double load,double dt,sv_u32 gate);
 void sv_mtpa(double torque,const SvParams *p,double *id,double *iq);
 void sv_svpwm(double alpha,double beta,double bus,double duty[3]);
+double sv_gain(sv_u32 index);
 void sv_control(void);
 void sv_trip(sv_u32 code);
 void sv_management(void);

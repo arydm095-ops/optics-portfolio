@@ -56,6 +56,18 @@ int sv_reset_fault(void) {
 void sv_inject(sv_u32 mask) {
     sv.injection=mask;
 }
+double sv_gain(sv_u32 index) {
+    if(index>=6u)return 0;
+    if(sv.p.manual_gains)return sv.p.gains[index];
+    double wb=2*PI*sv.p.speed_bw,wc=2*PI*sv.p.current_bw;
+    switch(index) {
+        case 0:return 2*.9*wb*sv.p.inertia-sv.p.friction;
+        case 1:return sv.p.inertia*wb*wb;
+        case 2:return sv.p.ld*wc;
+        case 4:return sv.p.lq*wc;
+        default:return sv.p.rs*wc;
+    }
+}
 int sv_set(sv_u32 key,double v) {
     if(!(v==v)||sv_abs(v)>1e9) {
         sv.rejected++;
@@ -115,6 +127,20 @@ int sv_set(sv_u32 key,double v) {
         return 1;
         case 16: sv.timeout_enabled=v!=0;
         sv.last_can_tick=sv.tick;
+        return 1;
+        case 20: case 21: case 22: case 23: case 24: case 25:
+        if(v<0||v>((key==21u||key==23u||key==25u)?100000:(key==20u?100:1000)))break;
+        if(!sv.p.manual_gains) {
+            for(sv_u32 i=0;i<6;++i)sv.p.gains[i]=sv_gain(i);
+            sv.p.manual_gains=1;
+        }
+        sv.p.gains[key-20u]=v;
+        return 1;
+        case 26: if(v<0||v>150)break;
+        sv.p.position_kp=v;
+        return 1;
+        case 27: if(v!=0)break;
+        sv.p.manual_gains=0;
         return 1;
         default:break;
     }
@@ -209,6 +235,8 @@ double sv_get(sv_u32 key) {
         case 52:return sv.counter;
         case 53:return sv.have_counter;
         case 54:return sv.p.adc_range;
+        case 60: case 61: case 62: case 63: case 64: case 65:return sv_gain(key-60u);
+        case 66:return sv.p.position_kp;
         default:return 0;
     }
 }

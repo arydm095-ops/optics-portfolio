@@ -1,0 +1,15 @@
+'use strict';
+const assert=require('node:assert/strict'),Playback=require('./playback.js');
+const p=new Playback(),near=(a,b)=>assert.ok(Math.abs(a-b)<1e-10,`${a} != ${b}`);
+p.load([{time:0,position:0},{time:1,position:360},{time:2,position:720},{time:2.00005,position:720.018},{time:2.0001,position:720.036}]);
+assert.equal(p.playing,false);near(p.time,0);
+p.play(1000);p.update(1400);near(p.time,.4);near(p.state().position,144);
+p.pause(1500);near(p.time,.5);p.update(8000);near(p.time,.5);
+p.play(9000);p.update(9200);near(p.time,.7);
+p.setRate(.5,9200);p.update(9400);near(p.time,.8);
+p.seek(2.000075);near(p.state().position,720.027);assert.equal(p.playing,false);
+p.play(10000);p.update(11000);near(p.time,p.duration);assert.equal(p.playing,false);
+p.play(12000);near(p.time,0);assert.equal(p.playing,true);
+p.load([{time:0,position:0},{time:3,position:-1080}]);assert.equal(p.playing,false);near(p.time,0);
+p.seek(1.5);near(p.state().position,-540);p.seek(-10);near(p.time,0);p.seek(10);near(p.time,3);
+console.log('PASS playback: explicit start, pause/resume, rate changes, nonuniform timestamps, seek, end/restart and parameter reload.');

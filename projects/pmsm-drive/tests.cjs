@@ -15,6 +15,16 @@ function check(name,value,tolerance=0){assert.ok(value<=tolerance,name+': '+valu
  const without=S.run(c,'weakening',{weakening:false}),withFW=scenarios.weakening;check('弱磁开启后转速更高',withFW.final.rpm>without.final.rpm+200?0:1);
  check('伺服定位最终误差 / degree',scenarios.position.metrics.steadyError,.15);
  const withFF=scenarios.position,noFF=S.run(c,'position',{feedforward:false});check('轨迹前馈降低位置跟踪RMS',withFF.metrics.trackingRms<noFF.metrics.trackingRms?0:1);
+ const baseline=S.run(c,'step'),gains=Object.fromEntries(Array.from({length:6},(_,i)=>[20+i,c.sv_get(60+i)]));
+ for(let key=20;key<=25;key++){
+  const tuned=S.run(c,'step',{gains:{...gains,[key]:gains[key]*.5}});
+  check('可调控制增益 '+key+' / C读回',Math.abs(c.sv_get(60+key-20)-gains[key]*.5),1e-10);
+  const delta=Math.max(...baseline.trace.map((r,i)=>Math.abs(r.rpm-tuned.trace[i].rpm)+Math.abs(r.id-tuned.trace[i].id)+Math.abs(r.iq-tuned.trace[i].iq)));
+  check('可调控制增益 '+key+' / 执行波形变化',delta>.0001?0:1);
+ }
+ const positionTune=S.run(c,'position',{gains:{26:5},feedforward:false});
+ check('位置Kp / C读回',Math.abs(c.sv_get(66)-5),1e-10);
+ check('位置Kp / 跟踪误差变化',positionTune.metrics.trackingRms>noFF.metrics.trackingRms?0:1);
  const report={generatedAt:new Date().toISOString(),native,checks,passed:checks.length,total:checks.length,numericCrosscheck:{reference:probe,c:actual,error:errors,method:'RK4 reference vs C midpoint integration',duration:.1,dt:.0000125},crossRuntime:{native:native.snapshot,wasm:wasmSnapshot,maxError:Math.max(...differences)},scenarios,comparison:{weakening:{enabled:withFW.final.rpm,disabled:without.final.rpm},positionFeedforward:{enabled:withFF.metrics.trackingRms,disabled:noFF.metrics.trackingRms}}};
  fs.writeFileSync(path.join(root,'validation.json'),JSON.stringify(report,null,2)+'\n');console.log('PASS '+native.total+' native C checks and '+checks.length+' WebAssembly/model checks');console.log(JSON.stringify(report.comparison,null,2));
 })().catch(e=>{console.error(e);process.exit(1);});

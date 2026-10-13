@@ -16,6 +16,7 @@ function run(c,key,settings={}){
  c.sv_init(scenario.profile);c.sv_set(0,scenario.mode);c.sv_set(3,settings.mtpa===false?0:1);c.sv_set(4,settings.weakening===false?0:1);c.sv_set(5,settings.feedforward===false?0:1);
  if(settings.calibration?.[13])c.sv_set(13,Math.min(c.sv_get(49),settings.calibration[13]));
  for(const [id,value] of Object.entries(settings.calibration||{})){if(!c.sv_set(Number(id),value))throw Error('标定参数越界：'+id);}
+ for(const [id,value] of Object.entries(settings.gains||{})){if(!c.sv_set(Number(id),value))throw Error('控制增益越界：'+id);}
  c.sv_enable();const trace=[snapshot(c)],events=[];let stepped=false,loaded=false,reversed=false,injected=false;
  const duration=Math.round(scenario.duration*20000),start=performance.now();
  for(let tick=0;tick<duration;){

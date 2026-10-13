@@ -15,7 +15,11 @@
 | 诊断 | 过流、欠压、编码器失联、CAN指令超时、控制执行周期监测；锁存、有条件复位、显式重新使能 |
 | 验证 | 主机GCC回归、同一C核心的WASM一致性、独立RK4、MATLAB ode45与Simulink对象模型 |
 
-六种运行工况：速度/负载阶跃、伺服定位、基速以上升速、正反转、转矩模式、故障关断。修改参数会重新执行当前工况，保持图表与计算结果一致。三维轴系由计算角度驱动，可回放已计算的时间序列。停止驱动关闭PWM，转速仍由惯性、剩余电流与阻力决定；回放不改变控制核心。
+六种运行工况：速度/负载阶跃、伺服定位、基速以上升速、正反转、转矩模式、故障关断。修改参数会重新执行当前工况并更新曲线，三维播放停在起点。点击播放后按模型时间推进；暂停保留进度，再次点击继续；播放至末尾后点击可从头播放。进度条按采样时间定位，支持末段非均匀采样。停止驱动关闭PWM，转速仍由惯性、剩余电流与阻力决定；播放不改变控制核心。
+
+“控制与采样”中的控制器参数可切换速度PI、d/q电流PI、位置P。速度环Kp的单位为Nm/(rad/s)，Ki为Nm/rad；电流环Kp为V/A，Ki为V/(A·s)；位置Kp为s⁻¹。这些参数通过`sv_set(20..26)`进入C控制算法，实际有效值可从`sv_get(60..66)`读回。位置控制使用P加轨迹速度/加速度前馈，未加入微分项。
+
+“按带宽整定”由当前物性与带宽计算PI初值：速度Kp=2ζωbJ−B，Ki=Jωb²，ζ=0.9；电流Kpd=Ldωc、Kpq=Lqωc、Kid=Kiq=Rsωc。直接修改增益后切换为手动参数；`sv_set(27,0)`恢复自动模式。JSON标定和运行数据包含有效控制增益。回归检查逐项修改增益，比较C读回值和闭环执行波形。
 
 ## 软件结构
 
@@ -32,6 +36,7 @@ CAN / 标定参数 → 运行服务与状态管理 → 控制算法 → PWM占�
 - `firmware/servo.h`：参数、状态及模块接口。应用核心无动态内存分配。
 - `firmware/tests.c`：主机回归与独立MTPA数值搜索。
 - `reference.js`：独立RK4电机方程参考；不是控制代码的JavaScript替代。
+- `playback.js`、`playback-tests.cjs`：播放时钟与姿态定位，验证暂停续播、速度切换、非均匀采样、拖动和重算复位。
 - `matlab/build_mil.m`、`matlab/PMSM_DQ_MIL.slx`：可见Simulink电机对象与独立MATLAB交叉复核。
 - `native-validation.json`、`validation.json`、`matlab-validation.json`：可复现测试记录。
 
@@ -67,6 +72,7 @@ iq = T* / [1.5p(ψf−δid)]
 ```
 python build.py --gcc path/to/gcc --clang path/to/clang
 node tests.cjs
+node playback-tests.cjs
 python -m http.server 8000
 ```
 

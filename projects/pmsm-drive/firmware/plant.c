@@ -13,6 +13,8 @@ void sv_defaults(SvParams*p,sv_u32 profile) {
     p->current_bw=800;
     p->speed_bw=25;
     p->position_kp=35;
+    p->manual_gains=0;
+    for(sv_u32 i=0;i<6;++i)p->gains[i]=0;
     p->pole_pairs=4;
     p->encoder_lines=131072;
     if(profile==1) {

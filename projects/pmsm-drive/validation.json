@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-10-13T14:32:52.406Z",
+  "generatedAt": "2026-10-13T15:33:29.994Z",
   "native": {
-    "passed": 49,
-    "total": 49,
+    "passed": 57,
+    "total": 57,
     "tests": [
       {
         "name": "reset_disabled",
@@ -198,6 +198,38 @@
       },
       {
         "name": "real_can_deadline_expires",
+        "passed": true
+      },
+      {
+        "name": "manual_gain_bounds_rejected",
+        "passed": true
+      },
+      {
+        "name": "manual_gain_readback",
+        "passed": true
+      },
+      {
+        "name": "manual_gain_preserves_other_loops",
+        "passed": true
+      },
+      {
+        "name": "bandwidth_tuning_restores_automatic_gains",
+        "passed": true
+      },
+      {
+        "name": "speed_kp_changes_executed_torque",
+        "passed": true
+      },
+      {
+        "name": "d_axis_kp_changes_executed_voltage",
+        "passed": true
+      },
+      {
+        "name": "d_axis_ki_changes_integrator",
+        "passed": true
+      },
+      {
+        "name": "position_gain_changes_executed_speed",
         "passed": true
       }
     ],
@@ -412,10 +444,94 @@
       "passed": true,
       "error": 0,
       "tolerance": 0
+    },
+    {
+      "name": "可调控制增益 20 / C读回",
+      "passed": true,
+      "error": 0,
+      "tolerance": 1e-10
+    },
+    {
+      "name": "可调控制增益 20 / 执行波形变化",
+      "passed": true,
+      "error": 0,
+      "tolerance": 0
+    },
+    {
+      "name": "可调控制增益 21 / C读回",
+      "passed": true,
+      "error": 0,
+      "tolerance": 1e-10
+    },
+    {
+      "name": "可调控制增益 21 / 执行波形变化",
+      "passed": true,
+      "error": 0,
+      "tolerance": 0
+    },
+    {
+      "name": "可调控制增益 22 / C读回",
+      "passed": true,
+      "error": 0,
+      "tolerance": 1e-10
+    },
+    {
+      "name": "可调控制增益 22 / 执行波形变化",
+      "passed": true,
+      "error": 0,
+      "tolerance": 0
+    },
+    {
+      "name": "可调控制增益 23 / C读回",
+      "passed": true,
+      "error": 0,
+      "tolerance": 1e-10
+    },
+    {
+      "name": "可调控制增益 23 / 执行波形变化",
+      "passed": true,
+      "error": 0,
+      "tolerance": 0
+    },
+    {
+      "name": "可调控制增益 24 / C读回",
+      "passed": true,
+      "error": 0,
+      "tolerance": 1e-10
+    },
+    {
+      "name": "可调控制增益 24 / 执行波形变化",
+      "passed": true,
+      "error": 0,
+      "tolerance": 0
+    },
+    {
+      "name": "可调控制增益 25 / C读回",
+      "passed": true,
+      "error": 0,
+      "tolerance": 1e-10
+    },
+    {
+      "name": "可调控制增益 25 / 执行波形变化",
+      "passed": true,
+      "error": 0,
+      "tolerance": 0
+    },
+    {
+      "name": "位置Kp / C读回",
+      "passed": true,
+      "error": 0,
+      "tolerance": 1e-10
+    },
+    {
+      "name": "位置Kp / 跟踪误差变化",
+      "passed": true,
+      "error": 0,
+      "tolerance": 0
     }
   ],
-  "passed": 26,
-  "total": 26,
+  "passed": 40,
+  "total": 40,
   "numericCrosscheck": {
     "reference": [
       13.591294456458657,

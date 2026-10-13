@@ -28,9 +28,9 @@ void sv_control(void) {
     }
     if(sv.tick%20u==0u&&sv.mode==2u)trajectory();
     if(sv.tick%10u==0u&&sv.mode!=1u) {
-        double wb=2*PI*sv.p.speed_bw,error=(sv.mode==2u?sv.speed_ref:sv.target)-sv.speed;
+        double error=(sv.mode==2u?sv.speed_ref:sv.target)-sv.speed;
         if(sv.mode==0u)sv.speed_ref=sv.target;
-        double kp=2*.9*wb*sv.p.inertia-sv.p.friction,ki=sv.p.inertia*wb*wb;
+        double kp=sv_gain(0),ki=sv_gain(1);
         double raw=kp*error+sv.int_speed;
         if(sv.mode==2u&&sv.feedforward)raw+=sv.p.inertia*sv.trajectory_acceleration;
         double max_torque=1.5*(double)sv.p.pole_pairs*sv.p.flux*sv.p.imax;
@@ -51,14 +51,14 @@ void sv_control(void) {
     q=sv.torque_ref/(1.5*(double)sv.p.pole_pairs*(sv.p.flux+(sv.p.ld-sv.p.lq)*sv.id_ref));
     double qlimit=sv_sqrt(sv.p.imax*sv.p.imax-sv.id_ref*sv.id_ref);
     sv.iq_ref=sv_clip(q,-qlimit,qlimit);
-    double wc=2*PI*sv.p.current_bw,ed=sv.id_ref-sv.id,eq=sv.iq_ref-sv.iq,we=(double)sv.p.pole_pairs*sv.speed;
-    double rawd=sv.p.ld*wc*ed+sv.int_d-we*sv.p.lq*sv.iq;
-    double rawq=sv.p.lq*wc*eq+sv.int_q+we*(sv.p.ld*sv.id+sv.p.flux);
+    double ed=sv.id_ref-sv.id,eq=sv.iq_ref-sv.iq,we=(double)sv.p.pole_pairs*sv.speed;
+    double rawd=sv_gain(2)*ed+sv.int_d-we*sv.p.lq*sv.iq;
+    double rawq=sv_gain(4)*eq+sv.int_q+we*(sv.p.ld*sv.id+sv.p.flux);
     double norm=sv_sqrt(rawd*rawd+rawq*rawq),limit=.94*sv.bus_actual/1.7320508075688772,scale=norm>limit?limit/norm:1;
     sv.vd=rawd*scale;
     sv.vq=rawq*scale;
-    sv.int_d=sv_clip(sv.int_d+(sv.p.rs*wc*ed+1000*(sv.vd-rawd))*TS,-limit,limit);
-    sv.int_q=sv_clip(sv.int_q+(sv.p.rs*wc*eq+1000*(sv.vq-rawq))*TS,-limit,limit);
+    sv.int_d=sv_clip(sv.int_d+(sv_gain(3)*ed+1000*(sv.vd-rawd))*TS,-limit,limit);
+    sv.int_q=sv_clip(sv.int_q+(sv_gain(5)*eq+1000*(sv.vq-rawq))*TS,-limit,limit);
     sv.voltage_use=sv_sqrt(sv.vd*sv.vd+sv.vq*sv.vq)/limit;
     sv_svpwm(sv.vd*cs-sv.vq*sn,sv.vd*sn+sv.vq*cs,sv.bus_actual,sv.duty);
 }
