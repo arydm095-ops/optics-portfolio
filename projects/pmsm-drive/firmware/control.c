@@ -1,6 +1,16 @@
 #include "servo.h"
 #define PI 3.14159265358979323846
 #define TS .00005
+double sv_notch(double input) {
+    if(!sv.p.notch)return input;
+    double angle=PI*sv.p.notch_hz*.0005,t=sv_sin(angle)/sv_cos(angle),t2=t*t;
+    double a0=1+2*sv.p.notch_pole*t+t2,b0=(1+2*sv.p.notch_zero*t+t2)/a0;
+    double b1=2*(t2-1)/a0,b2=(1-2*sv.p.notch_zero*t+t2)/a0,a2=(1-2*sv.p.notch_pole*t+t2)/a0;
+    double output=b0*input+sv.notch_z1;
+    sv.notch_z1=b1*input-b1*output+sv.notch_z2;
+    sv.notch_z2=b2*input-a2*output;
+    return output;
+}
 static void trajectory(void) {
     double dt=.001,duration=sv.trajectory_duration,u=sv_clip(sv.trajectory_t/duration,0,1),u2=u*u,u3=u2*u,u4=u3*u,u5=u4*u;
     double displacement=sv.target-sv.trajectory_start;
@@ -9,7 +19,7 @@ static void trajectory(void) {
     sv.trajectory_acceleration=displacement*(60*u-180*u2+120*u3)/(duration*duration);
     if(sv.trajectory_t<duration)sv.trajectory_t+=dt;
     sv.speed_ref=sv.p.position_kp*(sv.position_ref-sv.theta_feedback)+(sv.feedforward?sv.trajectory_velocity:0);
-    sv.speed_ref=sv_clip(sv.speed_ref,-500,500);
+    sv.speed_ref=sv_clip(sv.speed_ref,-sv.p.speed_limit,sv.p.speed_limit);
     sv.position_calls++;
 }
 void sv_control(void) {
@@ -34,8 +44,9 @@ void sv_control(void) {
         double raw=kp*error+sv.int_speed;
         if(sv.mode==2u&&sv.feedforward)raw+=sv.p.inertia*sv.trajectory_acceleration;
         double max_torque=1.5*(double)sv.p.pole_pairs*sv.p.flux*sv.p.imax;
-        sv.torque_ref=sv_clip(raw,-max_torque,max_torque);
-        sv.int_speed=sv_clip(sv.int_speed+(ki*error+200*(sv.torque_ref-raw))*.0005,-max_torque,max_torque);
+        double filtered=sv_notch(raw);
+        sv.torque_ref=sv_clip(filtered,-max_torque,max_torque);
+        sv.int_speed=sv_clip(sv.int_speed+(ki*error+200*(sv.torque_ref-filtered))*.0005,-max_torque,max_torque);
         sv.speed_calls++;
     }
     if(sv.mode==1u)sv.torque_ref=sv.target;

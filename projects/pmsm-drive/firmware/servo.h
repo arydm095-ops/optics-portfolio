@@ -6,12 +6,15 @@ typedef struct  {
     double rs, ld, lq, flux, inertia, friction, bus, imax, adc_range;
     double current_bw, speed_bw, position_kp;
     double gains[6];
+    double load_inertia, stiffness, shaft_damping, load_friction, coulomb;
+    double notch_hz, notch_zero, notch_pole, speed_limit;
+    sv_u32 elastic, notch;
     sv_u32 manual_gains;
     sv_u32 pole_pairs, encoder_lines;
 }
 SvParams;
 typedef struct  {
-    double id, iq, omega, theta;
+    double id, iq, omega, theta, load_omega, load_theta;
 }
 SvPlant;
 typedef struct  {
@@ -23,6 +26,7 @@ typedef struct  {
     double target, load, bus_actual, id, iq, speed, theta_feedback, previous_theta;
     double speed_ref, position_ref, torque_ref, id_ref, iq_ref, mtpa_id, fw_id;
     double int_d, int_q, int_speed, vd, vq, duty[3], ia, ib, ic, voltage_use;
+    double notch_z1, notch_z2;
     double trajectory_t, trajectory_start, trajectory_duration, trajectory_velocity, trajectory_acceleration;
     sv_u32 mtpa, weakening, feedforward;
 }
@@ -38,6 +42,8 @@ void sv_plant_step(SvPlant *m,const SvParams *p,double vd,double vq,double load,
 void sv_mtpa(double torque,const SvParams *p,double *id,double *iq);
 void sv_svpwm(double alpha,double beta,double bus,double duty[3]);
 double sv_gain(sv_u32 index);
+double sv_notch(double input);
+double sv_mechanical_probe(sv_u32 field,sv_u32 steps);
 void sv_control(void);
 void sv_trip(sv_u32 code);
 void sv_management(void);

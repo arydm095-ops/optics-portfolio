@@ -34,6 +34,7 @@ int sv_enable(void) {
     }
     sv.enabled=1;
     sv.int_d=sv.int_q=sv.int_speed=0;
+    sv.notch_z1=sv.notch_z2=0;
     sv.trajectory_t=0;
     sv.trajectory_start=sv.theta_feedback;
     sv.last_can_tick=sv.tick;
@@ -42,6 +43,7 @@ int sv_enable(void) {
 void sv_stop(void) {
     sv.enabled=0;
     sv.int_d=sv.int_q=sv.int_speed=0;
+    sv.notch_z1=sv.notch_z2=0;
     sv.id_ref=sv.iq_ref=sv.torque_ref=0;
 }
 int sv_reset_fault(void) {
@@ -60,9 +62,10 @@ double sv_gain(sv_u32 index) {
     if(index>=6u)return 0;
     if(sv.p.manual_gains)return sv.p.gains[index];
     double wb=2*PI*sv.p.speed_bw,wc=2*PI*sv.p.current_bw;
+    double inertia=sv.p.inertia+(sv.p.elastic?sv.p.load_inertia:0);
     switch(index) {
-        case 0:return 2*.9*wb*sv.p.inertia-sv.p.friction;
-        case 1:return sv.p.inertia*wb*wb;
+        case 0:return sv_clip(2*.9*wb*inertia-sv.p.friction,0,100000);
+        case 1:return inertia*wb*wb;
         case 2:return sv.p.ld*wc;
         case 4:return sv.p.lq*wc;
         default:return sv.p.rs*wc;
@@ -80,7 +83,7 @@ int sv_set(sv_u32 key,double v) {
         sv.trajectory_start=sv.theta_feedback;
         sv.trajectory_t=0;
         return 1;
-        case 1: if(sv_abs(v)>1000)break;
+        case 1: if(sv_abs(v)>(sv.mode==0u?sv.p.speed_limit:1000))break;
         sv.target=v;
         sv.trajectory_start=sv.theta_feedback;
         sv.trajectory_t=0;
@@ -94,42 +97,42 @@ int sv_set(sv_u32 key,double v) {
         return 1;
         case 5: sv.feedforward=v!=0;
         return 1;
-        case 6: if(v<5||v>80)break;
+        case 6: if(v<1||v>250)break;
         sv.p.speed_bw=v;
         return 1;
-        case 7: if(v<100||v>1500)break;
+        case 7: if(v<50||v>4000)break;
         sv.p.current_bw=v;
         return 1;
-        case 8: if(v<.00001||v>.05)break;
+        case 8: if(v<.000001||v>2)break;
         sv.p.inertia=v;
         return 1;
-        case 9: if(v<1||v>150||v>sv.p.adc_range*.85)break;
+        case 9: if(v<.1||v>1000||v>sv.p.adc_range*.85)break;
         sv.p.imax=v;
         return 1;
-        case 10: if(v<.005||v>1)break;
+        case 10: if(v<.0001||v>2)break;
         sv.p.flux=v;
         return 1;
-        case 11: if(v<.00001||v>.02||v<sv.p.rs*.000025)break;
+        case 11: if(v<.000001||v>.1||v<sv.p.rs*.000025)break;
         sv.p.ld=v;
         return 1;
-        case 12: if(v<.00001||v>.02||v<sv.p.rs*.000025)break;
+        case 12: if(v<.000001||v>.1||v<sv.p.rs*.000025)break;
         sv.p.lq=v;
         return 1;
-        case 13: if(v<.01||v>5||v*.000025>sv.p.ld||v*.000025>sv.p.lq)break;
+        case 13: if(v<.001||v>20||v*.000025>sv.p.ld||v*.000025>sv.p.lq)break;
         sv.p.rs=v;
         return 1;
-        case 14: if(v<20||v>600)break;
+        case 14: if(v<5||v>1000)break;
         sv.p.bus=v;
         sv.bus_actual=v;
         return 1;
-        case 15: if(v<.1||v>3)break;
+        case 15: if(v<.1||v>10)break;
         sv.trajectory_duration=v;
         return 1;
         case 16: sv.timeout_enabled=v!=0;
         sv.last_can_tick=sv.tick;
         return 1;
         case 20: case 21: case 22: case 23: case 24: case 25:
-        if(v<0||v>((key==21u||key==23u||key==25u)?100000:(key==20u?100:1000)))break;
+        if(v<0||v>(key==21u?100000000:(key==23u||key==25u)?10000000:key==20u?100000:10000))break;
         if(!sv.p.manual_gains) {
             for(sv_u32 i=0;i<6;++i)sv.p.gains[i]=sv_gain(i);
             sv.p.manual_gains=1;
@@ -142,6 +145,21 @@ int sv_set(sv_u32 key,double v) {
         case 27: if(v!=0)break;
         sv.p.manual_gains=0;
         return 1;
+        case 28: if(v<1||v>32||v!=(double)(sv_u32)v)break;sv.p.pole_pairs=(sv_u32)v;return 1;
+        case 29: if(v<64||v>4194304||v!=(double)(sv_u32)v)break;sv.p.encoder_lines=(sv_u32)v;return 1;
+        case 30: if(v<1||v>2000||v*.85<sv.p.imax)break;sv.p.adc_range=v;return 1;
+        case 31: if(v<0||v>2)break;sv.p.friction=v;return 1;
+        case 32: sv.p.elastic=v!=0;return 1;
+        case 33: if(v<.000001||v>5)break;sv.p.load_inertia=v;return 1;
+        case 34: if(v<.01||v>100000)break;sv.p.stiffness=v;return 1;
+        case 35: if(v<0||v>20)break;sv.p.shaft_damping=v;return 1;
+        case 36: if(v<0||v>2)break;sv.p.load_friction=v;return 1;
+        case 37: if(v<0||v>100)break;sv.p.coulomb=v;return 1;
+        case 38: sv.p.notch=v!=0;sv.notch_z1=sv.notch_z2=0;return 1;
+        case 39: if(v<2||v>800)break;sv.p.notch_hz=v;return 1;
+        case 40: if(v<.001||v>1||v>sv.p.notch_pole)break;sv.p.notch_zero=v;return 1;
+        case 41: if(v<.01||v>2||v<sv.p.notch_zero)break;sv.p.notch_pole=v;return 1;
+        case 42: if(v<10||v>2000)break;sv.p.speed_limit=v;return 1;
         default:break;
     }
     sv.rejected++;
@@ -235,6 +253,17 @@ double sv_get(sv_u32 key) {
         case 52:return sv.counter;
         case 53:return sv.have_counter;
         case 54:return sv.p.adc_range;
+        case 55:return sv.motor.load_theta*180/PI;
+        case 56:return sv.motor.load_omega*60/(2*PI);
+        case 57:return sv.p.elastic?sv.p.stiffness*(sv.motor.theta-sv.motor.load_theta)+sv.p.shaft_damping*(sv.motor.omega-sv.motor.load_omega):0;
+        case 58:return (sv.motor.theta-sv.motor.load_theta)*180/PI;
+        case 59:return sv.p.coulomb*sv.motor.omega/sv_sqrt(sv.motor.omega*sv.motor.omega+.04);
+        case 70:return sv.p.pole_pairs;case 71:return sv.p.encoder_lines;case 72:return sv.p.adc_range;
+        case 73:return sv.p.friction;case 74:return sv.p.elastic;case 75:return sv.p.load_inertia;
+        case 76:return sv.p.stiffness;case 77:return sv.p.shaft_damping;case 78:return sv.p.load_friction;
+        case 79:return sv.p.coulomb;case 80:return sv.p.notch;case 81:return sv.p.notch_hz;
+        case 82:return sv.p.notch_zero;case 83:return sv.p.notch_pole;case 84:return sv.p.speed_limit;
+        case 85:return sv.trajectory_duration;
         case 60: case 61: case 62: case 63: case 64: case 65:return sv_gain(key-60u);
         case 66:return sv.p.position_kp;
         default:return 0;
@@ -242,10 +271,17 @@ double sv_get(sv_u32 key) {
 }
 double sv_plant_probe(sv_u32 field,sv_u32 steps,double vd,double vq,double load) {
     SvPlant m= {
-        0,0,0,0
+        0,0,0,0,0,0
     };
     SvParams p;
     sv_defaults(&p,0);
     for(sv_u32 i=0;i<steps;++i)sv_plant_step(&m,&p,vd,vq,load,.0000125,1);
     return field==0?m.id:field==1?m.iq:field==2?m.omega:m.theta;
+}
+
+double sv_mechanical_probe(sv_u32 field,sv_u32 steps) {
+    SvParams p=sv.p;SvPlant m={0,0,1,0,0,0};
+    p.elastic=1;p.friction=0;p.load_friction=0;p.shaft_damping=0;p.coulomb=0;
+    for(sv_u32 n=0;n<steps;++n)sv_plant_step(&m,&p,0,0,0,.0000125,0);
+    return field==0?m.omega:field==1?m.load_omega:field==2?m.theta:m.load_theta;
 }

@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-10-13T15:33:29.994Z",
+  "generatedAt": "2026-10-13T16:49:17.727Z",
   "native": {
-    "passed": 57,
-    "total": 57,
+    "passed": 64,
+    "total": 64,
     "tests": [
       {
         "name": "reset_disabled",
@@ -231,6 +231,34 @@
       {
         "name": "position_gain_changes_executed_speed",
         "passed": true
+      },
+      {
+        "name": "custom_motor_pole_pairs_and_encoder",
+        "passed": true
+      },
+      {
+        "name": "fractional_pole_pairs_rejected",
+        "passed": true
+      },
+      {
+        "name": "custom_adc_and_current_range",
+        "passed": true
+      },
+      {
+        "name": "two_mass_conserves_angular_momentum",
+        "passed": true
+      },
+      {
+        "name": "two_mass_load_state_is_independent",
+        "passed": true
+      },
+      {
+        "name": "notch_unity_dc_gain",
+        "passed": true
+      },
+      {
+        "name": "enable_resets_notch_state",
+        "passed": true
       }
     ],
     "snapshot": [
@@ -318,6 +346,24 @@
       "passed": true,
       "error": 6.195675217313124e-8,
       "tolerance": 0.001
+    },
+    {
+      "name": "resonance / 数值有限",
+      "passed": true,
+      "error": 0,
+      "tolerance": 0
+    },
+    {
+      "name": "resonance / 电压约束",
+      "passed": true,
+      "error": 0,
+      "tolerance": 1e-12
+    },
+    {
+      "name": "resonance / 无意外故障",
+      "passed": true,
+      "error": 0,
+      "tolerance": 0
     },
     {
       "name": "step / 数值有限",
@@ -530,8 +576,8 @@
       "tolerance": 0
     }
   ],
-  "passed": 40,
-  "total": 40,
+  "passed": 43,
+  "total": 43,
   "numericCrosscheck": {
     "reference": [
       13.591294456458657,
@@ -667,6 +713,99 @@
     "maxError": 5.2018094720551744e-8
   },
   "scenarios": {
+    "resonance": {
+      "scenario": {
+        "name": "弹性负载定位",
+        "profile": 1,
+        "mode": 2,
+        "target": 90,
+        "load": 0,
+        "duration": 2.4,
+        "step": 0.1,
+        "loadAt": 0.9
+      },
+      "metrics": {
+        "settlingTime": 0.6920000000000001,
+        "loadError": 0.0015021209142531688,
+        "residualRms": 0.0015089853633569199,
+        "peakTwist": 0,
+        "overshoot": 0.0030938585327709867,
+        "steadyError": 0.0015021209142531688,
+        "trackingRms": 0.13607353317721532,
+        "peakCurrent": 0.029505947963930627,
+        "maxVoltageUse": 0.015092953926988196,
+        "faultLatency": null,
+        "samples": 2762,
+        "settledSamples": 1461
+      },
+      "final": {
+        "time": 2.4,
+        "enabled": 1,
+        "mode": 2,
+        "fault": 0,
+        "rpm": -0.07493924943765227,
+        "rpmRef": -0.016021728515598854,
+        "position": 90.00150212091425,
+        "positionRef": 90,
+        "id": -0.0000012979641651995286,
+        "iq": -0.006769128581250997,
+        "idRef": 0,
+        "iqRef": -0.002573847742825678,
+        "torque": -0.0004419273350821316,
+        "load": 0,
+        "vd": -0.0001843200582013272,
+        "vq": 0.016340546798264625,
+        "bus": 48,
+        "voltageUse": 0.0006273151105409229,
+        "ia": 0,
+        "ib": -0.005862237420615535,
+        "ic": 0.005862237420615535,
+        "dutyA": 0.49999414208389376,
+        "dutyB": 0.5002948187035625,
+        "dutyC": 0.4997051812964375,
+        "encoder": 32769,
+        "fastCalls": 48000,
+        "speedCalls": 4800,
+        "positionCalls": 2400,
+        "managementCalls": 2400,
+        "canFrames": 0,
+        "crcErrors": 0,
+        "sequenceErrors": 0,
+        "rejected": 0,
+        "faultTime": 0,
+        "torqueRef": -0.00038607716142385174,
+        "mtpaId": 0,
+        "fwId": 0,
+        "actualId": -0.0003446350802704086,
+        "adcA": 2048,
+        "adcB": 2047,
+        "actualIq": -0.002946182233880877,
+        "currentLimit": 8,
+        "inertia": 0.00012,
+        "ld": 0.0012,
+        "lq": 0.0012,
+        "flux": 0.025,
+        "busRated": 48,
+        "speedBandwidth": 35,
+        "currentBandwidth": 600,
+        "rs": 0.55,
+        "trajectoryVelocity": 0,
+        "trajectoryAcceleration": 0,
+        "loadPosition": 90.00150212091425,
+        "loadRpm": -0.07493924943765227,
+        "shaftTorque": 0,
+        "twist": 0,
+        "frictionTorque": 0,
+        "polePairs": 4
+      },
+      "events": [
+        {
+          "time": 0.1,
+          "action": "目标给定",
+          "value": 90
+        }
+      ]
+    },
     "step": {
       "scenario": {
         "name": "速度与负载阶跃",
@@ -680,6 +819,10 @@
         "description": "0.1s给定转速阶跃，0.9s施加阻力矩；观察动态响应与负载恢复。"
       },
       "metrics": {
+        "settlingTime": 0.047000000000000014,
+        "loadError": 40969.73917561535,
+        "residualRms": 31993.085258966625,
+        "peakTwist": 0,
         "overshoot": 0.21089192018912398,
         "steadyError": 0.021174194066134078,
         "trackingRms": 7949.478855917388,
@@ -741,7 +884,13 @@
         "currentBandwidth": 800,
         "rs": 0.12,
         "trajectoryVelocity": 0,
-        "trajectoryAcceleration": 0
+        "trajectoryAcceleration": 0,
+        "loadPosition": 40969.73917561535,
+        "loadRpm": 3000.021174194066,
+        "shaftTorque": 0,
+        "twist": 0,
+        "frictionTorque": 0,
+        "polePairs": 4
       },
       "events": [
         {
@@ -769,6 +918,10 @@
         "description": "48V伺服轴执行五次多项式轨迹，位置、速度和电流环按不同周期运行。"
       },
       "metrics": {
+        "settlingTime": 0.6910000000000001,
+        "loadError": 0.0007049600115465182,
+        "residualRms": 0.0014026466444070572,
+        "peakTwist": 0,
         "overshoot": 0.0007020146027040634,
         "steadyError": 0.0007049600115465182,
         "trackingRms": 0.5396642815611558,
@@ -830,7 +983,13 @@
         "currentBandwidth": 600,
         "rs": 0.55,
         "trajectoryVelocity": 0,
-        "trajectoryAcceleration": 0
+        "trajectoryAcceleration": 0,
+        "loadPosition": 360.00070496001155,
+        "loadRpm": -0.0005311505775138105,
+        "shaftTorque": 0,
+        "twist": 0,
+        "frictionTorque": 0,
+        "polePairs": 4
       },
       "events": [
         {
@@ -853,6 +1012,10 @@
         "description": "提高目标转速，观察负d轴弱磁、电压利用率与电流圆约束。"
       },
       "metrics": {
+        "settlingTime": 0.211,
+        "loadError": 110287.78217278355,
+        "residualRms": 81142.33969472791,
+        "peakTwist": 0,
         "overshoot": 0.9452074945272007,
         "steadyError": 0.009374074555125844,
         "trackingRms": 15646.471023109762,
@@ -914,7 +1077,13 @@
         "currentBandwidth": 800,
         "rs": 0.12,
         "trajectoryVelocity": 0,
-        "trajectoryAcceleration": 0
+        "trajectoryAcceleration": 0,
+        "loadPosition": 110287.78217278355,
+        "loadRpm": 6500.009374074555,
+        "shaftTorque": 0,
+        "twist": 0,
+        "frictionTorque": 0,
+        "polePairs": 4
       },
       "events": [
         {
@@ -943,6 +1112,10 @@
         "description": "从正转切换为反转，观察制动转矩、反向电流和速度环积分状态。"
       },
       "metrics": {
+        "settlingTime": 0.035,
+        "loadError": -671.2340015759147,
+        "residualRms": 8403.599772993106,
+        "peakTwist": 0,
         "overshoot": 0.2377049258995612,
         "steadyError": 0.047663782626159445,
         "trackingRms": 5370.224641049253,
@@ -1004,7 +1177,13 @@
         "currentBandwidth": 800,
         "rs": 0.12,
         "trajectoryVelocity": 0,
-        "trajectoryAcceleration": 0
+        "trajectoryAcceleration": 0,
+        "loadPosition": -671.2340015759147,
+        "loadRpm": -2000.047663782626,
+        "shaftTorque": 0,
+        "twist": 0,
+        "frictionTorque": 0,
+        "polePairs": 4
       },
       "events": [
         {
@@ -1037,6 +1216,10 @@
         "description": "在转矩模式下跟踪转矩给定；速度由净转矩、惯量和阻力共同决定。"
       },
       "metrics": {
+        "settlingTime": 0,
+        "loadError": 25192.88275866874,
+        "residualRms": 19405.93980571711,
+        "peakTwist": 0,
         "overshoot": 0.10755946925498823,
         "steadyError": 0.003995162152328646,
         "trackingRms": 2645.107839799602,
@@ -1098,7 +1281,13 @@
         "currentBandwidth": 800,
         "rs": 0.12,
         "trajectoryVelocity": 0,
-        "trajectoryAcceleration": 0
+        "trajectoryAcceleration": 0,
+        "loadPosition": 25192.88275866874,
+        "loadRpm": 4714.475088853434,
+        "shaftTorque": 0,
+        "twist": 0,
+        "frictionTorque": 0,
+        "polePairs": 4
       },
       "events": [
         {
@@ -1127,6 +1316,10 @@
         "description": "运行期间注入异常；记录故障锁存时刻与PWM关闭后的电机状态。"
       },
       "metrics": {
+        "settlingTime": 0.04200000000000001,
+        "loadError": 16187.757616247622,
+        "residualRms": 15677.875064999587,
+        "peakTwist": 0,
         "overshoot": 0.17272299863697071,
         "steadyError": 2400,
         "trackingRms": 6397.796645469944,
@@ -1188,7 +1381,13 @@
         "currentBandwidth": 800,
         "rs": 0.12,
         "trajectoryVelocity": 0,
-        "trajectoryAcceleration": 0
+        "trajectoryAcceleration": 0,
+        "loadPosition": 16187.757616247622,
+        "loadRpm": 5.5403089183170276e-46,
+        "shaftTorque": 0,
+        "twist": 0,
+        "frictionTorque": 0,
+        "polePairs": 4
       },
       "events": [
         {

@@ -1,0 +1,213 @@
+{
+  "generatedAt": "2026-10-13T16:49:17.939Z",
+  "passed": 22,
+  "total": 22,
+  "checks": [
+    {
+      "name": "two-mass antiresonance",
+      "error": 1.8953372205032792e-10,
+      "tolerance": 1e-8,
+      "passed": true
+    },
+    {
+      "name": "two-mass resonance",
+      "error": 1.411422090313863e-10,
+      "tolerance": 1e-8,
+      "passed": true
+    },
+    {
+      "name": "prewarped numerator 0",
+      "error": 1.1102230246251565e-16,
+      "tolerance": 1e-12,
+      "passed": true
+    },
+    {
+      "name": "prewarped numerator 1",
+      "error": 2.220446049250313e-16,
+      "tolerance": 1e-12,
+      "passed": true
+    },
+    {
+      "name": "prewarped numerator 2",
+      "error": 0,
+      "tolerance": 1e-12,
+      "passed": true
+    },
+    {
+      "name": "prewarped pole coefficient",
+      "error": 0,
+      "tolerance": 1e-12,
+      "passed": true
+    },
+    {
+      "name": "notch centre attenuation",
+      "error": 2.1316282072803006e-14,
+      "tolerance": 1e-10,
+      "passed": true
+    },
+    {
+      "name": "notch low frequency gain",
+      "error": 1.1102230246251565e-16,
+      "tolerance": 1e-9,
+      "passed": true
+    },
+    {
+      "name": "notch Nyquist gain",
+      "error": 0,
+      "tolerance": 1e-12,
+      "passed": true
+    },
+    {
+      "name": "classic gain margin",
+      "error": 5.773159728050814e-15,
+      "tolerance": 1e-8,
+      "passed": true
+    },
+    {
+      "name": "classic phase margin",
+      "error": 0.0000308695841511053,
+      "tolerance": 0.0001,
+      "passed": true
+    },
+    {
+      "name": "all three resonance gain crossings retained",
+      "error": 0,
+      "tolerance": 0,
+      "passed": true
+    },
+    {
+      "name": "C two-mass analytic state 0",
+      "error": 0.000008367465648917438,
+      "tolerance": 0.0001,
+      "passed": true
+    },
+    {
+      "name": "C two-mass analytic state 1",
+      "error": 0.000002091866411813026,
+      "tolerance": 0.0001,
+      "passed": true
+    },
+    {
+      "name": "C two-mass analytic state 2",
+      "error": 9.721317965893927e-8,
+      "tolerance": 0.0001,
+      "passed": true
+    },
+    {
+      "name": "C two-mass analytic state 3",
+      "error": 2.4303294921673713e-8,
+      "tolerance": 0.0001,
+      "passed": true
+    },
+    {
+      "name": "C notch tone amplitude",
+      "error": 8.326672684688674e-16,
+      "tolerance": 1e-9,
+      "passed": true
+    },
+    {
+      "name": "C notch reduces load-side residual positioning RMS",
+      "error": 0,
+      "tolerance": 0,
+      "passed": true
+    },
+    {
+      "name": "full motor definition survives JSON roundtrip",
+      "error": 0,
+      "tolerance": 1e-15,
+      "passed": true
+    },
+    {
+      "name": "motor inductance uses H internally",
+      "error": 0,
+      "tolerance": 1e-15,
+      "passed": true
+    },
+    {
+      "name": "elastic workbench preset reduces residual RMS by more than 15 percent",
+      "error": 0,
+      "tolerance": 0,
+      "passed": true
+    },
+    {
+      "name": "recommended PI satisfies requested model phase margin",
+      "error": 0,
+      "tolerance": 0,
+      "passed": true
+    }
+  ],
+  "mechanicalComparison": {
+    "before": {
+      "settlingTime": 0.6910000000000001,
+      "loadError": 0.001085228043550046,
+      "residualRms": 0.002031313081860815,
+      "peakTwist": 0.011316747588970225,
+      "overshoot": 0.0046860625497894635,
+      "steadyError": 0.0025859099292944165,
+      "trackingRms": 0.13887313076483776,
+      "peakCurrent": 0.0864224499755583,
+      "maxVoltageUse": 0.016161240089266955,
+      "faultLatency": null,
+      "samples": 2762,
+      "settledSamples": 1461
+    },
+    "after": {
+      "settlingTime": 0.6920000000000001,
+      "loadError": -0.0018220346352251227,
+      "residualRms": 0.0018575828139976824,
+      "peakTwist": 0.01022843447774882,
+      "overshoot": 0.005158931360208877,
+      "steadyError": 0.0013728550626979086,
+      "trackingRms": 0.13855170155726926,
+      "peakCurrent": 0.07628420633490234,
+      "maxVoltageUse": 0.016358451989620968,
+      "faultLatency": null,
+      "samples": 2762,
+      "settledSamples": 1461
+    }
+  },
+  "workbenchPreset": {
+    "before": {
+      "settlingTime": 0.6920000000000001,
+      "loadError": 0.00258725312552599,
+      "residualRms": 0.0022300300376593097,
+      "peakTwist": 0.012297554016988637,
+      "overshoot": 0.0056542461683288065,
+      "steadyError": 0.0022443325212719856,
+      "trackingRms": 0.138236477208331,
+      "peakCurrent": 0.08454639043589227,
+      "maxVoltageUse": 0.016188668883521554,
+      "faultLatency": null,
+      "samples": 2762,
+      "settledSamples": 1461
+    },
+    "after": {
+      "settlingTime": 0.6910000000000001,
+      "loadError": -0.0010395273237264746,
+      "residualRms": 0.001607923020545434,
+      "peakTwist": 0.010870689945151522,
+      "overshoot": 0.005488715371847598,
+      "steadyError": 0.00025542968927538823,
+      "trackingRms": 0.13862547844956286,
+      "peakCurrent": 0.0732193219157604,
+      "maxVoltageUse": 0.015655122015854925,
+      "faultLatency": null,
+      "samples": 2762,
+      "settledSamples": 1461
+    }
+  },
+  "crossings": [
+    {
+      "frequency": 10.221931400458361,
+      "margin": 85.55860141592358
+    },
+    {
+      "frequency": 21.682880510791108,
+      "margin": 267.84161520147904
+    },
+    {
+      "frequency": 91.05822102344216,
+      "margin": 89.51263356321739
+    }
+  ]
+}

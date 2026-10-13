@@ -17,6 +17,9 @@ void sv_defaults(SvParams*p,sv_u32 profile) {
     for(sv_u32 i=0;i<6;++i)p->gains[i]=0;
     p->pole_pairs=4;
     p->encoder_lines=131072;
+    p->elastic=0;p->notch=0;p->load_inertia=.018;p->stiffness=1776.528792196;
+    p->shaft_damping=.08;p->load_friction=.001;p->coulomb=0;
+    p->notch_hz=100;p->notch_zero=.04;p->notch_pole=.35;p->speed_limit=1000;
     if(profile==1) {
         p->rs=.55;
         p->ld=.0012;
@@ -29,6 +32,8 @@ void sv_defaults(SvParams*p,sv_u32 profile) {
         p->adc_range=12;
         p->current_bw=600;
         p->speed_bw=35;
+        p->load_inertia=.00036;p->stiffness=35.5305758439;
+        p->shaft_damping=.0016;p->load_friction=.000025;
     }
 }
 static SvPlant derivative(SvPlant m,const SvParams*p,double vd,double vq,double load,sv_u32 gate) {
@@ -39,7 +44,17 @@ static SvPlant derivative(SvPlant m,const SvParams*p,double vd,double vq,double 
     double torque=1.5*(double)p->pole_pairs*(p->flux+(p->ld-p->lq)*m.id)*m.iq;
     /* load is a resisting torque. Near zero a smooth sign avoids back-driving an unpowered shaft. */
     double opposing=load*m.omega/sv_sqrt(m.omega*m.omega+.04);
-    d.omega=(torque-opposing-p->friction*m.omega)/p->inertia;
+    double friction=p->coulomb*m.omega/sv_sqrt(m.omega*m.omega+.04);
+    if(p->elastic) {
+        double shaft=p->stiffness*(m.theta-m.load_theta)+p->shaft_damping*(m.omega-m.load_omega);
+        opposing=load*m.load_omega/sv_sqrt(m.load_omega*m.load_omega+.04);
+        d.omega=(torque-shaft-p->friction*m.omega-friction)/p->inertia;
+        d.load_omega=(shaft-opposing-p->load_friction*m.load_omega)/p->load_inertia;
+        d.load_theta=m.load_omega;
+    } else {
+        d.omega=(torque-opposing-p->friction*m.omega-friction)/p->inertia;
+        d.load_omega=d.omega;d.load_theta=m.omega;
+    }
     d.theta=m.omega;
     return d;
 }
@@ -49,11 +64,13 @@ void sv_plant_step(SvPlant*m,const SvParams*p,double vd,double vq,double load,do
     mid.iq+=.5*dt*a.iq;
     mid.omega+=.5*dt*a.omega;
     mid.theta+=.5*dt*a.theta;
+    mid.load_omega+=.5*dt*a.load_omega;mid.load_theta+=.5*dt*a.load_theta;
     SvPlant b=derivative(mid,p,vd,vq,load,gate);
     m->id+=dt*b.id;
     m->iq+=dt*b.iq;
     m->omega+=dt*b.omega;
     m->theta+=dt*b.theta;
+    m->load_omega+=dt*b.load_omega;m->load_theta+=dt*b.load_theta;
 }
 void sv_mtpa(double torque,const SvParams*p,double*id,double*iq) {
     double q=torque/(1.5*(double)p->pole_pairs*p->flux),d=0,delta=p->lq-p->ld;

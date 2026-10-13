@@ -15,7 +15,7 @@ return class DrivePlayback {
   const a=this.trace[lo],b=this.trace[Math.min(lo+1,this.trace.length-1)];
   const ratio=b.time>a.time?Math.max(0,Math.min(1,(this.time-a.time)/(b.time-a.time))):0;
   // Only the displayed pose is interpolated; logged controller values remain measured samples.
-  return {...a,time:this.time,position:a.position+(b.position-a.position)*ratio};
+  return {...a,time:this.time,position:a.position+(b.position-a.position)*ratio,loadPosition:(a.loadPosition??a.position)+((b.loadPosition??b.position)-(a.loadPosition??a.position))*ratio};
  }
 };
 });
